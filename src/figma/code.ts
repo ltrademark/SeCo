@@ -8,11 +8,12 @@ figma.ui.onmessage = async (msg) => {
     case 'create-color':
       if (figma.currentPage.selection.length > 0) {
         const color = msg.color;
-        const r = msg.color.r / 255;
-        const g = msg.color.g / 255;
-        const b = msg.color.b / 255;
+        const r = color.r / 255;
+        const g = color.g / 255;
+        const b = color.b / 255;
     
         for (const node of figma.currentPage.selection) {
+          // @ts-ignore
           node.fills = [{type: 'SOLID', color: {r: r, g: g, b: b}}];
         }
       } else {
