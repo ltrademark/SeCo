@@ -398,6 +398,7 @@ export default {
   mounted() {
     // initiated the document
     onmessage = (event) => {
+      console.log(event)
       let data = event.data.pluginMessage;
       if (data) {
         this.favouritedIcons = data;
