@@ -11,11 +11,10 @@ body {
 	width: 100%;
 	height: 100%;
 	font-family: $fontfam;
-	@include theme('light');
-	font-size: font(22px, 16px, 1920px, 786px);
-  @include respond-to('mobile') {
-    font-size: font(22px, 16px, 786px, 320px);
-  }
+	// @include theme('light');
+  background-color: var(--figma-color-bg);
+  color: var(--figma-color-text);
+	font-size: font(22px, 16px, 786px, 320px);
 }
 
 a {

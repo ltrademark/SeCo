@@ -19,7 +19,11 @@ figma.parameters.on('input', ({ key, query, result }: ParameterInputEvent ) => {
   }
 })
 async function startUI() {
-  figma.showUI(__html__, { width: 350, height: 600 });
+  figma.showUI(__html__, { 
+    width: 350,
+    height: 600,
+    themeColors: true
+  });
   figma.ui.onmessage = async (msg) => {
     switch (msg.type) {
       case 'create-color':

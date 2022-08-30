@@ -1,5 +1,5 @@
 <template>
-  <div id="simple" :class="{ 'lights-out': darkMode }">
+  <div id="simple">
     <div class="icon-search">
       <i class="icon icon--search"></i>
       <div class="icon-search--container input">
@@ -16,7 +16,8 @@
               type="button"
               @click="showFavourites = !showFavourites"
               :title="showFavourites ? 'Hide Favourites' : 'Show Favourites'">
-              <i class="icon" :class="showFavourites ? 'icon--star-on icon--blue' : 'icon--star-off'"></i>
+              <!-- <i class="icon" :class="showFavourites ? 'icon--star-on icon--blue' : 'icon--star-off'"></i> -->
+              <star-icon :filled="showFavourites" />
       </button>
     </div>
     <div class="icon-actions">
@@ -62,7 +63,7 @@
       </div>
     </transition>
     <div class="grid-wrap" v-show="loaded">
-      <div class="icon-grid" :style="loadButtonStyle">
+      <div class="icon-grid">
         <div class="icon-grid--item"
           :class="{selected: (filterByColour ? idx : icon.icons_index) === selectedIcon}"
           v-for="(icon, idx) in filteredIcons.slice(0, itemsLoaded)"
@@ -78,7 +79,7 @@
           <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
         </div>
         <transition name="fade">
-          <div class="icon-grid--item load-more button button--secondary"
+          <div class="icon-grid--item load-more btn btn--secondary"
               @click="loadMore"
               v-if="itemsLoaded < icons.length && isearch === ''">
             Load {{ specialTrigger ? 'Everything' : 'More' }}
@@ -103,12 +104,12 @@
 </template>
 
 <script>
-const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons@4.8.0';
+const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0';
 
 export default {
   data() {
     return {
-      version: '3.0',
+      version: '4.0',
       loaded: false,
       icons: [],
       favouritedIcons: [],
@@ -121,7 +122,7 @@ export default {
       showFavourites: false,
       showMobileSorts: false,
       darkMode: false,
-      SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons@4.8.0'
+      SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0'
     };
   },
   filters: {
@@ -162,8 +163,10 @@ export default {
         hasSmartquote = icon.indexOf('’') > -1,
         hasNormalquote = icon.indexOf("'") > -1,
         hasAmp = icon.indexOf('&') > -1,
+        hasHyphen = icon.indexOf('-') > -1,
         hasPlus = icon.indexOf('+') > -1,
         hasExcl = icon.indexOf('!') > -1,
+        hasFSlash = icon.indexOf('/') > -1,
         hasPeriod = icon.indexOf('.') > -1,
         periodIsFirst = icon.indexOf('.') === 0;
       let url = SimpleIconsSource + '/icons/';
@@ -176,15 +179,17 @@ export default {
         return url + icon.toLowerCase().replace("'", '') + '.svg';
       } else if (hasAmp) {
         return url + icon.toLowerCase().replace('&', '-and-') + '.svg';
+      } else if (hasHyphen) {
+        return url + icon.toLowerCase().replace('-', '') + '.svg';
       } else if (hasPlus) {
         return url + icon.toLowerCase().replace(/[+]/g, 'plus') + '.svg';
       } else if (hasExcl) {
         return url + icon.toLowerCase().replace('!', '') + '.svg';
+      } else if (hasFSlash) {
+        return url + icon.toLowerCase().replace(/\//g, '') + '.svg';
       } else if (hasPeriod) {
         if (periodIsFirst) {
-          return url + icon.toLowerCase().replace('.', 'dot-') + '.svg';
-        } else {
-          return url + icon.toLowerCase().replace('.', '-dot-') + '.svg';
+          return url + icon.toLowerCase().replace('.', 'dot') + '.svg';
         }
       } else {
         return url + icon.toLowerCase() + '.svg';
@@ -425,9 +430,9 @@ export default {
           <div class="notification-toast selection">
             <div class="bubble">
               <div class="bubble-actions">
-                <button class="button button--secondary" type="button" @click="placeColor(rgbTarget)"><copy-icon /> Use Colour</button>
-                <button class="button button--secondary" type="button" @click="favouriteToggle()"><star-icon :filled="faved" /> {{faved ? 'Favourited':'Favourite'}}</button>
-                <button type="button" @click="placeIcon()" class="button button--primary"><download-icon /> Place Icon</button>
+                <button class="btn btn--secondary" type="button" @click="placeColor(rgbTarget)"><copy-icon /> Use Colour</button>
+                <button class="btn btn--secondary" type="button" @click="favouriteToggle()"><star-icon :filled="faved" /> {{faved ? 'Favourited':'Favourite'}}</button>
+                <button type="button" @click="placeIcon()" class="btn btn--primary"><download-icon /> Place Icon</button>
               </div>
             </div>
           </div>
@@ -507,6 +512,12 @@ export default {
         }
       },
     },
+    'star-icon': {
+      props: ['filled'],
+      template: `
+              <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" :fill="filled ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          `
+    }
   },
 };
 </script>
@@ -516,7 +527,10 @@ export default {
 
 :root {
   --theme: 'light';
-  --accent: #{$a};
+  --accent: var(--figma-color-bg-brand);
+  --accent-hover: var(--figma-color-bg-brand-hover);
+  --accent-active: var(--figma-color-bg-brand-pressed);
+  font-size: 8px;
 }
 
 * {
@@ -528,17 +542,15 @@ body {
   width: 100%;
   height: 100%;
   font-family: $fontfam;
-  @include theme('light');
-  font-size: font(22px, 16px, 1920px, 786px);
+  background-color: var(--figma-color-bg);
+  color: var(--figma-color-text);
+	font-size: font(22px, 16px, 786px, 320px);
   margin: 0;
-  @include respond-to('mobile') {
-    font-size: font(22px, 16px, 786px, 320px);
-  }
 }
 
 a {
   text-decoration: none;
-  color: darken($accent, 10%);
+  color: var(--accent);
   font-weight: 700;
   &:hover,
   &:focus {
@@ -546,17 +558,8 @@ a {
   }
   &:visited {
     font-style: italic;
-    border-bottom: $border-width + 0px dashed $accent;
+    border-bottom: $border-width + 0px dashed  var(--accent);
   }
-}
-
-code {
-  border-radius: 2px;
-  padding: 3px 5px;
-  font-size: 1em;
-  font-weight: 800;
-  color: inherit;
-  background-color: rgba(setcolor($selectedTheme, fg), 0.05);
 }
 
 .loader {
@@ -572,7 +575,6 @@ code {
 .button--primary:enabled:active {
   border: none !important;
 }
-.button,
 .btn {
   position: relative;
   @include buttonDefault();
@@ -580,35 +582,34 @@ code {
   &:focus,
   &:hover {
     outline: none;
-    background-color: #F0F0F0;
+    background-color: var(--figma-color-bg-secondary);
   }
   &--primary {
     color: #fff;
-    background-color: $accent;
+    background-color: var(--accent);
     &:focus,
     &:hover {
-      background-color: darken($accent, 15%);
+      background-color: var(--accent-hover);
     }
   }
-  &-secondary {
-    color: $accent;
-    background-color: setcolor($selectedTheme, bg);
-    border: 4px solid $accent;
+  &--secondary {
+    color: var(--figma-color-text);
+    background-color: var(--figma-color-bg);
+    border: 1px solid currentColor !important;
     &:focus,
     &:hover {
-      background-color: darken(setcolor($selectedTheme, bg), 10%);
-      border-color: darken($accent, 15%);
-      color: darken($accent, 15%);
+      border-color: var(--figma-color-bg-tertiary);
+      background-color: var(--figma-color-bg-secondary);
     }
   }
-  &-default {
+  &--default {
     color: inherit;
-    background-color: rgba(setcolor($selectedTheme, fg), 0.055);
+    background-color: var(--figma-color-bg);
     user-select: none;
-    border: 1px solid #eee;
+    border: 1px solid var(--figma-color-border);
     &:focus,
     &:hover {
-      background-color: setcolor($selectedTheme, bg);
+      background-color: var(--accent-hover);
     }
   }
   &-square {
@@ -695,13 +696,13 @@ code {
   }
 }
 .icon-search {
-  $bg: setcolor($selectedTheme, bg);
   position: relative;
   display: flex;
   width: 100%;
   padding: 5px 0;
-  background-color: rgba($bg, 1);
-  border-bottom: 1px solid rgba(0,0,0,.1);
+  color: var(--figma-color-text);
+  background-color: var(--figma-color-bg);
+  border-bottom: 1px solid var(--figma-color-border);
   z-index: 2;
   
   .input {
@@ -709,10 +710,14 @@ code {
     padding-bottom: 0;
     border: none !important;
     margin: 0;
+    color: var(--figma-color-text);
+    background-color: var(--figma-color-bg);
   }
 
   button {
     background: none;
+    color: inherit;
+    font-size: 18px;
     margin-right: ($gap / 2) + 0px;
     margin-left: ($gap / 2) + 0px;
     z-index: 1;
@@ -754,6 +759,7 @@ code {
       display: block;
       width: $searchbar + 0px;
       height: $searchbar + 0px;
+      color: currentColor;
     }
   }
   &--container {
@@ -770,13 +776,13 @@ code {
       font-family: inherit;
       font-weight: 400;
       border: 1px solid rgba(#eee, 0);
+      color: currentColor;
+      background: none;
       border-radius: 3px;
       padding: 0;
       z-index: 1;
       &:focus {
         outline: none;
-        // background-color: setcolor($selectedTheme, bg);
-        // border-color: #eee;
       }
     }
 
@@ -791,6 +797,7 @@ code {
       align-items: center;
       width: $searchbar + 0px;
       height: $searchbar + 0px;
+      color: currentColor;
       opacity: 0.54;
       user-select: none;
       z-index: 1;
@@ -813,14 +820,14 @@ code {
   }
 }
 .icon-actions {
-  $bg: setcolor($selectedTheme, bg);
   position: relative;
   display: flex;
   width: 100%;
   padding: 0px $gap + 0px;
   font-size: 12px;
-  background-color: rgba($bg, 1);
-  border-bottom: 1px solid rgba(0,0,0,.1);
+  color: var(--figma-color-text);
+  background-color: var(--figma-color-bg);
+  border-bottom: 1px solid var(--figma-color-border);
   min-height: 40px;
   z-index: 2;
 
@@ -828,11 +835,11 @@ code {
     display: flex;
     align-items: center;
     font-size: inherit;
-    border-right: 1px solid rgba(0,0,0,.1);
+    border-right: 1px solid var(--figma-color-border);
     .select-menu__button {
       font-size: inherit;
       margin-left: .5rem;
-      color: $a;
+      color: var(--accent);
     }
   }
   &__select {
@@ -847,13 +854,13 @@ code {
     b {
       display: flex;
       align-items: center;  
-      color: $a;
+      color: var(--accent);
       padding: ($gap/2) + 0px ($gap/3) + 0px;
       padding-right: 0;
       font-weight: normal;
       border-radius: 3px;
       &:hover {
-        background-color: #F0F0F0;
+        background-color: var(--figma-color-bg-secondary);
       }
       span {
         position: relative;
@@ -870,8 +877,8 @@ code {
       margin: 0;
       padding:0;
       list-style-type: none;
-      border: 1px solid rgba(0,0,0,.1);
-      background-color: rgba($bg, 1);
+      border: 1px solid var(--figma-color-border);
+      background-color: var(--figma-color-bg);
       border-radius: 3px;
       margin-top: ($gap/3)+0px;
       overflow: hidden;
@@ -887,7 +894,7 @@ code {
       li {
         padding: ($gap/2) + 0px $gap + 0px;
         &:hover {
-          background-color: #F0F0F0;
+          background-color: var(--figma-color-bg-secondary);
         }
       }
     }
@@ -908,7 +915,7 @@ code {
     @include custom-scrollbar();
   }
   &.favourites-grid {
-    background-color: #F0F0F0;
+    background-color: var(--figma-color-bg-tertiary);
     p {
       font-size: 12px;
       text-align: center;
@@ -933,30 +940,40 @@ code {
 
   &--item {
     cursor: pointer;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: var(--grid-min-width);
-    padding: .5rem;
-    border-radius: 6px;
-    text-align: center;
-    overflow: hidden;
-    outline-offset: ($gap/2 - ($border-width/2))+0px;
-    user-select: none;
+    &:not(.btn) {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: var(--grid-min-width);
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+      overflow: hidden;
+      outline-offset: ($gap/2 - ($border-width/2))+0px;
+      user-select: none;
+    }
     > * {
       margin-top: 0;
     }
     &.load-more {
-      position: absolute;
+      position: sticky;
       bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
+      grid-column: 1 / -1;
+      margin: 0;
+      color: inherit;
+      background: inherit;
+      border-color: inherit;
+      background-color: var(--figma-color-bg);
+      border: 1px solid currentColor;
+      &:focus,
+      &:hover {
+        background-color: var(--figma-color-bg-secondary);
+      }
     }
     &.selected {
-      box-shadow: inset 0 0 0 1px $a,
-                  inset 0 0 0 4px #fff;
+      box-shadow: inset 0 0 0 2px var(--accent),
+                  inset 0 0 0 4px var(--figma-color-bg);
     }
     span {
       display: inline-block;
@@ -1011,12 +1028,12 @@ code {
   }
   &.copied {
     .bubble {
-      border: 5px solid darken($accent, 10%);
+      border: 5px solid var(--accent-hover);
     }
   }
   .bubble {
-    @include theme($selectedTheme);
-    background-color: rgba(setcolor($selectedTheme, bg), 0.9);
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
     @supports (backdrop-filter: blur(10px)) {
       backdrop-filter: saturate(180%) blur(10px);
     }

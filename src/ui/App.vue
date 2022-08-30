@@ -7,7 +7,6 @@ import "../figma/figma-ds/js/selectMenu";
 import "../figma/figma-ds/js/iconInput";
 import "../figma/figma-ds/js/disclosure";
 
-import Welcome from "./components/Welcome";
 import primary from "./components/primary";
 
 export default {
@@ -16,7 +15,6 @@ export default {
   },
 
   components: {
-    Welcome,
     primary
   },
 
