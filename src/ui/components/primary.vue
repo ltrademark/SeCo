@@ -11,7 +11,7 @@
                placeholder="What Brand Are You Looking For?"
                v-model="isearch"
                @blur="confirmSearch"/>
-        <i @click="clearQuery" class="icon icon--close" v-if="isearch !== ''"></i>
+        <b @click="clearQuery" v-if="isearch !== ''"><close-icon class="icon"></close-icon></b>
       </div>
       <button class="btn btn-square show-on-mobile"
               type="button"
@@ -161,41 +161,49 @@ export default {
       return 'color: ' + contrastcolor.toString();
     },
     svgname(icon) {
-      let newName,
-        hasSpace = icon.indexOf(' ') > -1,
-        hasSmartquote = icon.indexOf('’') > -1,
-        hasNormalquote = icon.indexOf("'") > -1,
-        hasAmp = icon.indexOf('&') > -1,
-        hasHyphen = icon.indexOf('-') > -1,
-        hasPlus = icon.indexOf('+') > -1,
-        hasExcl = icon.indexOf('!') > -1,
-        hasFSlash = icon.indexOf('/') > -1,
-        hasPeriod = icon.indexOf('.') > -1,
-        periodIsFirst = icon.indexOf('.') === 0;
+      let hasSpace = icon.indexOf(' ') > -1,
+          hasSmartquote = icon.indexOf('’') > -1,
+          hasNormalquote = icon.indexOf("'") > -1,
+          hasAmp = icon.indexOf('&') > -1,
+          hasHyphen = icon.indexOf('-') > -1,
+          hasColon = icon.indexOf(':') > -1,
+          hasPlus = icon.indexOf('+') > -1,
+          hasExcl = icon.indexOf('!') > -1,
+          hasFSlash = icon.indexOf('/') > -1,
+          hasPeriod = icon.indexOf('.') > -1,
+          periodIsFirst = icon.indexOf('.') === 0;
       let url = SimpleIconsSource + '/icons/';
 
-      if (hasSpace) {
-        return url + icon.toLowerCase().replace(/\s/g, '') + '.svg';
-      } else if (hasSmartquote) {
-        return url + icon.toLowerCase().replace('’', '') + '.svg';
-      } else if (hasNormalquote) {
-        return url + icon.toLowerCase().replace("'", '') + '.svg';
-      } else if (hasAmp) {
-        return url + icon.toLowerCase().replace('&', '-and-') + '.svg';
-      } else if (hasHyphen) {
-        return url + icon.toLowerCase().replace('-', '') + '.svg';
-      } else if (hasPlus) {
-        return url + icon.toLowerCase().replace(/[+]/g, 'plus') + '.svg';
-      } else if (hasExcl) {
-        return url + icon.toLowerCase().replace('!', '') + '.svg';
-      } else if (hasFSlash) {
-        return url + icon.toLowerCase().replace(/\//g, '') + '.svg';
-      } else if (hasPeriod) {
-        if (periodIsFirst) {
-          return url + icon.toLowerCase().replace('.', 'dot') + '.svg';
-        }
-      } else {
-        return url + icon.toLowerCase() + '.svg';
+      let sanitizeIcon = icon.normalize('NFD').replace(/\p{Diacritic}/gu, "");
+
+      switch(true) {
+        case hasSpace:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\s/g, '') + '.svg';
+        case hasSmartquote:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\’/g, '') + '.svg';
+        case hasNormalquote:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\'/g, '') + '.svg';
+        case hasAmp:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\&/g, 'and') + '.svg';
+        case hasHyphen:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\-/g, '') + '.svg';
+        case hasColon:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\:/g, '') + '.svg';
+        case hasPlus:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/[+]/g, 'plus') + '.svg';
+        case hasExcl:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\!/g, '') + '.svg';
+        case hasFSlash:
+          return url + sanitizeIcon.toLowerCase().replaceAll(/\//g, '') + '.svg';
+        case hasPeriod:
+          let output;
+          if (periodIsFirst)
+            output = url + sanitizeIcon.toLowerCase().replaceAll(/\./g, 'dot') + '.svg';
+          else
+            output = url + sanitizeIcon.toLowerCase().replaceAll(/\./g, '') + '.svg';
+          return output;
+        default:
+          return url + sanitizeIcon.toLowerCase() + '.svg';
       }
     },
     sanitizeURL(url) {
@@ -521,11 +529,14 @@ export default {
               <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" :fill="filled ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           `
     },
+    'close-icon': {
+      template: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 21L21 9M21 21L9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    },
     'caret-icon': {
-      template: `<svg fill="none" height="30" viewBox="0 0 30 30" width="30" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="m15 16.7071-3-3 .7071-.7071 2.6465 2.6464 2.6464-2.6464.7071.7071-3 3-.3535.3536z" fill="currentColor" fill-rule="evenodd"/></svg>`,
+      template: `<svg fill="none" height="30" viewBox="0 0 30 30" width="30" xmlns="http://www.w3.org/2000/svg"><path d="M6 10L15.5 20L25 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     },
     'search-icon': {
-      template: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" ><path fill-rule="evenodd" clip-rule="evenodd" d="M16.3972 17.1046C15.6179 17.7296 14.6285 18.1034 13.5517 18.1034C11.0379 18.1034 9 16.0656 9 13.5517C9 11.0379 11.0379 9 13.5517 9C16.0656 9 18.1034 11.0379 18.1034 13.5517C18.1034 14.6286 17.7295 15.6181 17.1044 16.3975L20.3535 19.6467L19.6464 20.3538L16.3972 17.1046ZM17.1034 13.5517C17.1034 15.5133 15.5133 17.1034 13.5517 17.1034C11.5902 17.1034 10 15.5133 10 13.5517C10 11.5902 11.5902 10 13.5517 10C15.5133 10 17.1034 11.5902 17.1034 13.5517Z" fill="currentColor" /></svg>`,
+      template: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" ><path fill-rule="evenodd" clip-rule="evenodd" d="M19.243 20.987C17.3211 22.5284 14.881 23.4502 12.2254 23.4502C6.02587 23.4502 1 18.4247 1 12.2251C1 6.02574 6.02587 1 12.2254 1C18.4252 1 23.4508 6.02574 23.4508 12.2251C23.4508 14.8809 22.5287 17.3211 20.9871 19.2432L29 27.2562L27.2562 29L19.243 20.987ZM20.9846 12.2251C20.9846 17.0627 17.0631 20.9841 12.2254 20.9841C7.38795 20.9841 3.4662 17.0627 3.4662 12.2251C3.4662 7.38778 7.38795 3.46613 12.2254 3.46613C17.0631 3.46613 20.9846 7.38778 20.9846 12.2251Z" fill="currentColor" /></svg>`,
     }
   },
 };
@@ -587,7 +598,7 @@ a {
 svg.icon {
   color: var(--figma-color-text);
   width: auto;
-  height: 28px;
+  height: 1em;
 }
 .btn {
   position: relative;
@@ -714,29 +725,37 @@ svg.icon {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 5px 0;
+  padding: 5px 10px;
   color: var(--figma-color-text);
   background-color: var(--figma-color-bg);
   border-bottom: 1px solid var(--figma-color-border);
   z-index: 2;
   > svg {
-    height: 32px;
+    height: 22px;
+    margin-left: calc(22px - 18.22px);
   }
   .input {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding: 0 4px 0 7px;
     border: none !important;
     margin: 0;
     color: var(--figma-color-text);
     background-color: var(--figma-color-bg);
+    &:hover {
+      color: inherit;
+    }
+    &:focus,
+    &:active {
+      color: var(--figma-color-text);
+      padding: 0 4px 0 7px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
   }
 
   button {
     background: none;
     color: inherit;
     font-size: 18px;
-    margin-right: ($gap / 2) + 0px;
-    margin-left: ($gap / 2) + 0px;
     z-index: 1;
     &.active {
       box-shadow:0 0 0 $border-width + 0px $accent;
@@ -802,6 +821,10 @@ svg.icon {
         outline: none;
       }
     }
+    .icon {
+      width: 30px;
+      height: 30px;
+    }
 
     i {
       cursor: pointer;
@@ -852,6 +875,7 @@ svg.icon {
     display: flex;
     align-items: center;
     font-size: inherit;
+    padding-right: 10px;
     border-right: 1px solid var(--figma-color-border);
     .select-menu__button {
       font-size: inherit;
@@ -865,32 +889,29 @@ svg.icon {
     position: relative;
     display: flex;
     align-items: center;
-    margin-left: .2rem;
-    margin-right: .2rem;
+    padding-left: .5rem;
 
     b {
       display: flex;
       align-items: center;  
       color: var(--accent);
       padding: ($gap/2) + 0px ($gap/3) + 0px;
-      padding-right: 0;
       font-weight: normal;
       border-radius: 3px;
       &:hover {
         background-color: var(--figma-color-bg-secondary);
       }
-      span {
+      svg {
         position: relative;
         opacity: 1;
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        color: currentColor;
       }
     }
     .select-options {
       position: absolute;
       top: 100%;
-      left: 0;
+      left: 5px;
       margin: 0;
       padding:0;
       list-style-type: none;
@@ -926,6 +947,8 @@ svg.icon {
 .grid-wrap {
   position: relative;
   padding: $gap + 0px;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
   &:not(.favourites-grid) {
     overflow-x: hidden;
     overflow-y: auto;
@@ -983,6 +1006,7 @@ svg.icon {
       border-color: inherit;
       background-color: var(--figma-color-bg);
       border: 1px solid currentColor;
+      user-select: none;
       &:focus,
       &:hover {
         background-color: var(--figma-color-bg-secondary);
