@@ -1,7 +1,8 @@
 <template>
   <div id="simple">
     <div class="icon-search">
-      <i class="icon icon--search"></i>
+      <!-- <i class="icon icon--search"></i> -->
+      <search-icon class="icon"></search-icon>
       <div class="icon-search--container input">
         <label for="#isearch" style="display: none;"></label>
         <input type="text" 
@@ -24,7 +25,9 @@
       <div class="icon-actions__sort">
         Sort
         <div class="icon-actions__select">
-          <b @click="sortOpen=!sortOpen">{{ filterByColour ? 'By Colour' : 'Alphabetically' }} <span class="select-menu__icon"></span></b>
+          <b @click="sortOpen=!sortOpen">
+            {{ filterByColour ? 'By Colour' : 'Alphabetically' }} <caret-icon class="icon"></caret-icon><!-- <span class="select-menu__icon"></span> -->
+          </b>
           <ul class="select-options" :class="sortOpen ? 'opened' : ''">
             <li v-if="filterByColour" @click.stop="sortByName">Alphabetically</li>
             <li v-if="!filterByColour" @click.stop="sortByColour">By Colour</li>
@@ -517,6 +520,12 @@ export default {
       template: `
               <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" :fill="filled ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           `
+    },
+    'caret-icon': {
+      template: `<svg fill="none" height="30" viewBox="0 0 30 30" width="30" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="m15 16.7071-3-3 .7071-.7071 2.6465 2.6464 2.6464-2.6464.7071.7071-3 3-.3535.3536z" fill="currentColor" fill-rule="evenodd"/></svg>`,
+    },
+    'search-icon': {
+      template: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" ><path fill-rule="evenodd" clip-rule="evenodd" d="M16.3972 17.1046C15.6179 17.7296 14.6285 18.1034 13.5517 18.1034C11.0379 18.1034 9 16.0656 9 13.5517C9 11.0379 11.0379 9 13.5517 9C16.0656 9 18.1034 11.0379 18.1034 13.5517C18.1034 14.6286 17.7295 15.6181 17.1044 16.3975L20.3535 19.6467L19.6464 20.3538L16.3972 17.1046ZM17.1034 13.5517C17.1034 15.5133 15.5133 17.1034 13.5517 17.1034C11.5902 17.1034 10 15.5133 10 13.5517C10 11.5902 11.5902 10 13.5517 10C15.5133 10 17.1034 11.5902 17.1034 13.5517Z" fill="currentColor" /></svg>`,
     }
   },
 };
@@ -574,6 +583,11 @@ a {
 }
 .button--primary:enabled:active {
   border: none !important;
+}
+svg.icon {
+  color: var(--figma-color-text);
+  width: auto;
+  height: 28px;
 }
 .btn {
   position: relative;
@@ -698,13 +712,16 @@ a {
 .icon-search {
   position: relative;
   display: flex;
+  align-items: center;
   width: 100%;
   padding: 5px 0;
   color: var(--figma-color-text);
   background-color: var(--figma-color-bg);
   border-bottom: 1px solid var(--figma-color-border);
   z-index: 2;
-  
+  > svg {
+    height: 32px;
+  }
   .input {
     padding-top: 0;
     padding-bottom: 0;
