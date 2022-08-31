@@ -7,17 +7,6 @@ interface msg {
 startUI();
 
 // @ts-ignore
-figma.parameters.on('input', ({ key, query, result }: ParameterInputEvent ) => {
-  console.log('parameters are up', key, query)
-  switch (key) {
-    case 'icon-name':
-      const icons = ['menu', 'settings', 'search', 'angle', 'checkbox', 'logout']
-      result.setSuggestions(icons.filter(s => s.includes(query)))
-      break
-    default:
-      return
-  }
-})
 async function startUI() {
   figma.showUI(__html__, { 
     width: 350,
@@ -25,7 +14,6 @@ async function startUI() {
     themeColors: true
   });
   figma.clientStorage.getAsync('faves').then(faves => {
-    console.log('getting favourites: ', faves)
     if(faves) figma.ui.postMessage(faves);
   }).catch(err=>{
     console.log('error: ', err)

@@ -424,10 +424,8 @@ export default {
   mounted() {
     // initiated the document
     onmessage = (event) => {
-      console.log('recieving from code.ts: ', event)
       let data = event.data.pluginMessage;
       if (data) {
-        console.log('data exists, sending data: ', data)
         this.favouritedIcons = data;
       } else {
         this.updateFavourites();

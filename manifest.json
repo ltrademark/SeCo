@@ -4,13 +4,5 @@
 	"api": "1.0.0",
 	"editorType": ["figma","figjam"],
 	"main": "dist/code.js",
-	"ui": "dist/ui.html",
-	"parameterOnly": false,
-	"parameters": [
-    {
-      "name": "Icon name",
-      "key": "icon-name",
-      "description": "Enter the name of the icon you want to insert."
-    }
-	]
+	"ui": "dist/ui.html"
 }
