@@ -24,7 +24,7 @@ A icon and color search library for your mockups and projects. Utilizes library 
 - finish implementing parameters
   - bind data from paramater to plugin
   - send data back to board and close parameter
-- Fix Favourites (currently does not store to local storage)
+- ~~Fix Favourites (currently does not store to local storage)~~
 - ~~implementing darkmode/theme support~~
 - ~~Pinned or Favourites option~~
 - ~~When placing icon, change position based on last icon placement~~
