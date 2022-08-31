@@ -161,50 +161,47 @@ export default {
       return 'color: ' + contrastcolor.toString();
     },
     svgname(icon) {
-      let hasSpace = icon.indexOf(' ') > -1,
-          hasSmartquote = icon.indexOf('’') > -1,
-          hasNormalquote = icon.indexOf("'") > -1,
-          hasAmp = icon.indexOf('&') > -1,
-          hasHyphen = icon.indexOf('-') > -1,
-          hasColon = icon.indexOf(':') > -1,
-          hasPlus = icon.indexOf('+') > -1,
-          hasExcl = icon.indexOf('!') > -1,
-          hasFSlash = icon.indexOf('/') > -1,
-          hasPeriod = icon.indexOf('.') > -1,
-          periodIsFirst = icon.indexOf('.') === 0;
       let url = SimpleIconsSource + '/icons/';
-
-      let sanitizeIcon = icon.normalize('NFD').replace(/\p{Diacritic}/gu, "");
-
+      let label = icon;
+      
       switch(true) {
-        case hasSpace:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\s/g, '') + '.svg';
-        case hasSmartquote:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\’/g, '') + '.svg';
-        case hasNormalquote:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\'/g, '') + '.svg';
-        case hasAmp:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\&/g, 'and') + '.svg';
-        case hasHyphen:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\-/g, '') + '.svg';
-        case hasColon:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\:/g, '') + '.svg';
-        case hasPlus:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/[+]/g, 'plus') + '.svg';
-        case hasExcl:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\!/g, '') + '.svg';
-        case hasFSlash:
-          return url + sanitizeIcon.toLowerCase().replaceAll(/\//g, '') + '.svg';
-        case hasPeriod:
-          let output;
-          if (periodIsFirst)
-            output = url + sanitizeIcon.toLowerCase().replaceAll(/\./g, 'dot') + '.svg';
-          else
-            output = url + sanitizeIcon.toLowerCase().replaceAll(/\./g, '') + '.svg';
-          return output;
+        case icon.indexOf(' ') > -1:
+          label = label.toLowerCase().replaceAll(/\s/g, ''); // has space
+        case icon.indexOf('’') > -1:
+          label = label.toLowerCase().replaceAll(/\’/g, ''); // has Smartquote
+        case icon.includes("'"):
+          label = label.toLowerCase().replaceAll(/\'/g, ''); // has normal quote
+        case icon.includes('&'):
+          label = label.toLowerCase().replaceAll('&', 'and'); // has ampersand
+        case icon.includes('-'):
+          label = label.toLowerCase().replaceAll('-', ''); // has hyphen
+        case icon.includes('_'):
+          label = label.toLowerCase().replaceAll('_', ''); // has underscore
+        case icon.includes(':'):
+          label = label.toLowerCase().replaceAll(/\:/g, ''); // has colon
+        case icon.includes('+'):
+          label = label.toLowerCase().replaceAll(/[+]/g, 'plus'); // has plus
+        case icon.includes('!'):
+          label = label.toLowerCase().replaceAll(/\!/g, ''); // has exclamation mark
+        case icon.includes('/'):
+          label = label.toLowerCase().replaceAll(/\//g, ''); // has forward slash
+        case icon.includes('°'):
+          label = label.toLowerCase().replaceAll('°', ''); // has temperature symbol
+        case icon.includes('.1'):
+          label = label.toLowerCase().replaceAll('.1', '1'); // VERY specific edgecase that has dot with 1
+        case label.includes('.'):
+          if((label.match(/[.]/g) !== null ? label.match(/[.]/g) : []).length > 1) {
+            label = label.toLowerCase().replace(/\./g, ''); // has multiple periods
+          } else if(label.endsWith('.')) {
+            label = label.toLowerCase().replace('.', ''); // has period at the end
+          } else {
+            label = label.toLowerCase().replace(/\./g, 'dot'); // has period anywhere
+          }
         default:
-          return url + sanitizeIcon.toLowerCase() + '.svg';
+          label = label.toLowerCase();
       }
+      let cleanLabel = label.normalize('NFD').replace(/\p{Diacritic}/gu, "");
+      return url + cleanLabel + '.svg';
     },
     sanitizeURL(url) {
       return url.slice(url.lastIndexOf('/') + 1, url.length);
@@ -247,8 +244,7 @@ export default {
           padding = loadHeight + gap;
 
       return 'padding-bottom: ' + padding + 'px';
-    },
-    
+    }
   },
   methods: {
     getSimple() {
@@ -409,6 +405,20 @@ export default {
           "*"
         );
       }
+    },
+    extraCharCheck(name) {
+      let hasSpace = name.indexOf(' ') > -1,
+          hasSmartquote = name.indexOf('’') > -1,
+          hasNormalquote = name.includes("'"),
+          hasAmp = name.includes('&'),
+          hasHyphen = name.includes('-'),
+          hasColon = name.includes(':'),
+          hasPlus = name.includes('+'),
+          hasExcl = name.includes('!'),
+          hasFSlash = name.includes('/'),
+          hasPeriod = name.includes('.');
+          let labelIsDirty = hasSpace || hasSmartquote || hasNormalquote || hasAmp || hasHyphen || hasColon || hasPlus || hasExcl || hasFSlash || hasPeriod;
+      return labelIsDirty;
     }
   },
   mounted() {

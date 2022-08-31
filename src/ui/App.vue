@@ -19,8 +19,6 @@ export default {
   },
 
   mounted() {
-    console.log('this mounted inside app vue', this)		
-    // Initialize the figma-ds components
     window.selectMenu.init();
     window.iconInput.init();
     window.disclosure.init();
