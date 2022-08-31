@@ -18,7 +18,7 @@
     </ul>
    </div>
    <div class="mini-modal--footer">
-    <a href="https://ltrdmrk.co" target="_blank">made with 💟 by Ltrademark</a>
+    <a href="https://ltrdmrk.co" target="_blank">made with ❤ by Ltrademark</a>
     <a href="https://github.com/ltrademark/SeCo/issues/new/choose" target="_blank">Report a bug</a>
    </div>
   </div>
