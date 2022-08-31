@@ -19,7 +19,7 @@
    </div>
    <div class="mini-modal--footer">
     <a href="https://ltrdmrk.co" target="_blank">made with ❤ by Ltrademark</a>
-    <a href="https://github.com/ltrademark/SeCo/issues/new/choose" target="_blank">Report a bug</a>
+    <a class="btn btn-secondary" href="https://github.com/ltrademark/SeCo/issues/new/choose" target="_blank">Report a bug</a>
    </div>
   </div>
  </div>
@@ -150,12 +150,14 @@
    user-select: none;
    a {
     font-size: 10px;
-    color: var(--accent);
+    color: var(--figma-color-text);
     font-weight: normal;
+    min-width: unset;
     &:hover {
      border: none;
     }
     + a {
+     color: var(--accent);
      margin-left: auto;
     }
    }
