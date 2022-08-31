@@ -424,9 +424,10 @@ export default {
   mounted() {
     // initiated the document
     onmessage = (event) => {
-      console.log(event)
+      console.log('recieving from code.ts: ', event)
       let data = event.data.pluginMessage;
       if (data) {
+        console.log('data exists, sending data: ', data)
         this.favouritedIcons = data;
       } else {
         this.updateFavourites();
@@ -611,40 +612,42 @@ svg.icon {
   height: 1em;
 }
 .btn {
+  --btn-fg: var(--figma-color-text);
+  --btn-bg: var(--figma-color-bg);
+
   position: relative;
   @include buttonDefault();
+  color: var(--btn-fg);
+  background-color: var(--btn-bg);
   z-index: 1;
   &:focus,
   &:hover {
+    --btn-bg: var(--figma-color-bg-secondary);
     outline: none;
-    background-color: var(--figma-color-bg-secondary);
   }
   &--primary {
-    color: #fff;
-    background-color: var(--accent);
+    --btn-fg: #fff;
+    --btn-bg: var(--accent);
     &:focus,
     &:hover {
-      background-color: var(--accent-hover);
+      --btn-bg: var(--accent-hover);
     }
   }
   &--secondary {
-    color: var(--figma-color-text);
-    background-color: var(--figma-color-bg);
     border: 1px solid currentColor !important;
     &:focus,
     &:hover {
+      --btn-bg: var(--figma-color-bg-secondary);
       border-color: var(--figma-color-bg-tertiary);
-      background-color: var(--figma-color-bg-secondary);
     }
   }
   &--default {
     color: inherit;
-    background-color: var(--figma-color-bg);
     user-select: none;
     border: 1px solid var(--figma-color-border);
     &:focus,
     &:hover {
-      background-color: var(--accent-hover);
+      --btn-bg: var(--accent-hover);
     }
   }
   &-square {

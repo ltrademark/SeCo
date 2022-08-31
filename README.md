@@ -25,6 +25,7 @@ A icon and color search library for your mockups and projects. Utilizes library 
   - bind data from paramater to plugin
   - send data back to board and close parameter
 - Fix Favourites (currently does not store to local storage)
+- ~~implementing darkmode/theme support~~
 - ~~Pinned or Favourites option~~
 - ~~When placing icon, change position based on last icon placement~~
   - Though techincally fixed, the edge case to account for is when there is nothing selected, icons will always populate on 0 for x and y. Need context of shapes atop shapes.

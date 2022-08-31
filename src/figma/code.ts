@@ -24,6 +24,12 @@ async function startUI() {
     height: 600,
     themeColors: true
   });
+  figma.clientStorage.getAsync('faves').then(faves => {
+    console.log('getting favourites: ', faves)
+    if(faves) figma.ui.postMessage(faves);
+  }).catch(err=>{
+    console.log('error: ', err)
+  });
   figma.ui.onmessage = async (msg) => {
     switch (msg.type) {
       case 'create-color':
