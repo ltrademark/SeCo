@@ -33,7 +33,10 @@
      'This modal is pretty new, and it came with this update',
      'Dark mode support is now here',
      'Added list view',
-     'Updated icon repository'
+     'Updated icon repository',
+     'Favourites has a new look',
+     'Icons favourited in normal grid, now have indicator',
+     'Holding the shift key turn the load more button, to load everything.'
     ]
    }
   }
