@@ -21,7 +21,9 @@ A icon and color search library for your mockups and projects. Utilizes library 
 ---
 
 ## ✅ To Do
+- cleanup and componentize code
 - ~~Fix Favourites (currently does not store to local storage)~~
+  - ~~Re-Do Favourites Style; right now a user can add many favourites and they will overflow the main viewing window.~~
 - ~~implementing darkmode/theme support~~
 - ~~Pinned or Favourites option~~
 - ~~When placing icon, change position based on last icon placement~~

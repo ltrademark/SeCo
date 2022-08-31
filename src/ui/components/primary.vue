@@ -34,8 +34,21 @@
           </ul>
         </div>
       </div>
-      <div class="icon-actions__ver">
+      <div class="icon-actions__view">
+        View As
+        <div class="icon-actions__select">
+          <b @click="viewOpen=!viewOpen">
+            {{ viewAsList ? 'List' : 'Grid' }} <caret-icon class="icon"></caret-icon>
+          </b>
+          <ul class="select-options" :class="viewOpen ? 'opened' : ''">
+            <li v-if="viewAsList" @click.stop="toggleViewDropdown(1)">Grid</li>
+            <li v-if="!viewAsList" @click.stop="toggleViewDropdown(2)">List</li>
+          </ul>
+        </div>
+      </div>
+      <div class="icon-actions__ver" @click="toggleWhatsNew()">
         v{{version}}
+        <question-icon class="icon"></question-icon>
       </div>
     </div>
     <div class="loader" v-if="!loaded">
@@ -60,13 +73,12 @@
             </span>
             <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
             <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
-            <i class="favourite-badge icon icon--star-on" :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"></i>
           </div>
         </div>
       </div>
     </transition>
     <div class="grid-wrap" v-show="loaded">
-      <div class="icon-grid">
+      <div class="icon-grid" :class="{'list-view' : viewAsList}">
         <div class="icon-grid--item"
           :class="{selected: (filterByColour ? idx : icon.icons_index) === selectedIcon}"
           v-for="(icon, idx) in filteredIcons.slice(0, itemsLoaded)"
@@ -80,12 +92,15 @@
           </span>
           <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
           <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
+          <i class="favourite-badge icon icon--star-on" 
+             :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"
+             v-if="favouritedIcons.some((obj) => obj.title === icon.title)"></i>
         </div>
         <transition name="fade">
           <div class="icon-grid--item load-more btn btn--secondary"
               @click="loadMore"
               v-if="itemsLoaded < icons.length && isearch === ''">
-            Load {{ specialTrigger ? 'Everything' : 'More' }}
+            Load {{ specialTrigger ? 'Everything' : `${itemsLoaded} More` }}
           </div>
         </transition>
       </div>
@@ -103,10 +118,15 @@
       >
       </selection-banner>
     </transition>
+    <transition name="zoomin">
+      <whats-new v-if="whatsNewModalOpen"></whats-new>
+    </transition>
   </div>
 </template>
 
 <script>
+import whatsNew from './whatsNew';
+
 const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0';
 
 export default {
@@ -119,11 +139,15 @@ export default {
       selectedIcon: null,
       itemsLoaded: 15,
       isearch: '',
-      filterByColour: false,
+      viewAsList: false,
+      viewAsGrid: true,
       specialTrigger: false,
+      filterByColour: false,
       sortOpen: false,
+      viewOpen: false,
       showFavourites: false,
       showMobileSorts: false,
+      whatsNewModalOpen: false,
       darkMode: false,
       SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0'
     };
@@ -382,6 +406,22 @@ export default {
     favToggle() {
       this.showFavourites = !this.showFavourites;
     },
+    toggleViewDropdown(tar) {
+      switch(tar) {
+        case 1:
+          this.viewAsList = false
+          break;
+        case 2:
+          this.viewAsList = true
+          break;
+        default:
+          break;
+      }
+      this.viewOpen = false
+    },
+    toggleWhatsNew(){
+      this.whatsNewModalOpen=!this.whatsNewModalOpen;
+    },
     handleIcons(idx) {
       let arr = this.icons || this.favouritedIcons;
       return arr[idx];
@@ -546,7 +586,11 @@ export default {
     },
     'search-icon': {
       template: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" ><path fill-rule="evenodd" clip-rule="evenodd" d="M19.243 20.987C17.3211 22.5284 14.881 23.4502 12.2254 23.4502C6.02587 23.4502 1 18.4247 1 12.2251C1 6.02574 6.02587 1 12.2254 1C18.4252 1 23.4508 6.02574 23.4508 12.2251C23.4508 14.8809 22.5287 17.3211 20.9871 19.2432L29 27.2562L27.2562 29L19.243 20.987ZM20.9846 12.2251C20.9846 17.0627 17.0631 20.9841 12.2254 20.9841C7.38795 20.9841 3.4662 17.0627 3.4662 12.2251C3.4662 7.38778 7.38795 3.46613 12.2254 3.46613C17.0631 3.46613 20.9846 7.38778 20.9846 12.2251Z" fill="currentColor" /></svg>`,
-    }
+    },
+    'question-icon': {
+      template: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 2C7.8203 2 2 7.8203 2 15C2 22.1797 7.8203 28 15 28C22.1797 28 28 22.1797 28 15C28 7.8203 22.1797 2 15 2ZM10.4975 12C9.90643 12 9.40657 11.5233 9.49197 10.9385C9.54874 10.5497 9.64575 10.1858 9.78403 9.76881C10.0537 9.00638 10.433 8.34792 10.9218 7.79343C11.4106 7.22161 12.009 6.77975 12.7169 6.46785C13.4249 6.15595 14.2171 6 15.0936 6C15.8858 6 16.6022 6.12129 17.2427 6.36388C17.9001 6.58915 18.4648 6.92704 18.9367 7.37756C19.4087 7.81076 19.7711 8.34792 20.0239 8.98905C20.2936 9.63019 20.4285 10.3666 20.4285 11.1984C20.4285 11.7355 20.3611 12.2207 20.2262 12.6539C20.1082 13.0698 19.9481 13.451 19.7458 13.7975C19.5436 14.1441 19.3076 14.4647 19.0379 14.7592C18.785 15.0538 18.5238 15.3397 18.2541 15.617C17.9844 15.8769 17.7147 16.1455 17.445 16.4227C17.1922 16.6826 16.9562 16.9685 16.7371 17.2804C16.669 17.3796 16.5908 17.4733 16.512 17.5678C16.3567 17.754 16.1986 17.9435 16.1091 18.1849C15.9948 18.4935 15.9952 18.5409 15.998 18.8228C15.9985 18.8734 15.9991 18.9315 15.9991 19V19.0173C15.9991 19.5676 15.553 20.0137 15.0028 20.0137C14.4525 20.0137 14.0064 19.5676 14.0064 19.0173V18.7921C14.0401 18.0643 14.0654 17.9129 14.2845 17.4104C14.5205 16.8906 14.7986 16.4314 15.1189 16.0328C15.456 15.6343 15.8016 15.2704 16.1555 14.9412C16.5264 14.5946 16.8635 14.2394 17.1669 13.8755C17.4871 13.4943 17.74 13.0784 17.9254 12.6279C18.1108 12.1774 18.1867 11.6316 18.1529 10.9904C18.0855 10.0374 17.7821 9.29229 17.2427 8.75513C16.7202 8.21797 16.0038 7.94938 15.0936 7.94938C14.4868 7.94938 13.9643 8.06202 13.526 8.28728C13.0878 8.51254 12.7169 8.81578 12.4135 9.19699C12.127 9.5782 11.9163 10.0287 11.7814 10.5486C11.7464 10.6838 11.7161 10.8058 11.6904 10.923C11.5624 11.5083 11.0966 12 10.4975 12ZM14.9995 24.0154C15.5518 24.0154 15.9995 23.5676 15.9995 23.0154C15.9995 22.4631 15.5518 22.0154 14.9995 22.0154C14.4472 22.0154 13.9995 22.4631 13.9995 23.0154C13.9995 23.5676 14.4472 24.0154 14.9995 24.0154Z" fill="currentColor"/></svg>`,
+    },
+    whatsNew
   },
 };
 </script>
@@ -559,6 +603,7 @@ export default {
   --accent: var(--figma-color-bg-brand);
   --accent-hover: var(--figma-color-bg-brand-hover);
   --accent-active: var(--figma-color-bg-brand-pressed);
+  --br: 3px;
   font-size: 8px;
 }
 
@@ -709,22 +754,23 @@ svg.icon {
   transform: translatey(100%);
 }
 
+.zoomin-enter-active,
+.zoomin-leave-active {
+  transition: $far $curve all;
+}
+.zoomin-enter,
+.zoomin-leave-to {
+  opacity: 0;
+  transform: scale(1.15);
+}
+
 #simple {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  .block {
-    cursor: pointer;
-    width: 100%;
-    height: 100px;
-    flex-basis: 100px;
-    border: 2px solid #ececec;
-    border-radius: 3px;
-    margin: $gap + 0px;
-    padding: ($gap * 2)+0px;
-    text-align: center;
-  }
+  overflow: hidden;
+
   .si-credits {
     width: 100%;
     font-size: 0.8em;
@@ -742,8 +788,8 @@ svg.icon {
   border-bottom: 1px solid var(--figma-color-border);
   z-index: 2;
   > svg {
-    height: 22px;
-    margin-left: calc(22px - 18.22px);
+    height: 18px;
+    margin-left: 2px;
   }
   .input {
     padding: 0 4px 0 7px;
@@ -768,40 +814,44 @@ svg.icon {
     color: inherit;
     font-size: 18px;
     z-index: 1;
+    border-radius: var(--br, 3px);
+    &:hover {
+     background-color: var(--figma-color-bg-secondary);
+    }
     &.active {
       box-shadow:0 0 0 $border-width + 0px $accent;
       color: setcolor($selectedTheme, fg);
       background-color: darken(setcolor($selectedTheme, bg), 10%);
     }
-    @include respond-to('mobile') {
-      &.hide-on-mobile {
-        $newGap: $gap/2;
-        position: absolute;
-        right: 0px;
-        background-color: setcolor($selectedTheme, bg);
-        transition: $near $snap opacity;
+    // @include respond-to('mobile') {
+    //   &.hide-on-mobile {
+    //     $newGap: $gap/2;
+    //     position: absolute;
+    //     right: 0px;
+    //     background-color: setcolor($selectedTheme, bg);
+    //     transition: $near $snap opacity;
 
-        &:nth-of-type(1) {
-          top: ($searchbar + $newGap)+0px;
-          transform: translateY(-($searchbar + $newGap)+0px);
-        }
-        &:nth-of-type(2) {
-          top: (($searchbar * 2) + ($newGap * 2))+0px;
-          transform: translateY(-(($searchbar * 2) + ($newGap * 2))+0px);
-        }
-      }
-      &.open {
-        display: block;
-        visibility: visible;
-        opacity: 1;
-        transition: $near $snap all;
-        &:nth-of-type(1),
-        &:nth-of-type(2) {
-          transform: translateY(0);
-          margin-top: ($gap/2)+0px;
-        }
-      }
-    }
+    //     &:nth-of-type(1) {
+    //       top: ($searchbar + $newGap)+0px;
+    //       transform: translateY(-($searchbar + $newGap)+0px);
+    //     }
+    //     &:nth-of-type(2) {
+    //       top: (($searchbar * 2) + ($newGap * 2))+0px;
+    //       transform: translateY(-(($searchbar * 2) + ($newGap * 2))+0px);
+    //     }
+    //   }
+    //   &.open {
+    //     display: block;
+    //     visibility: visible;
+    //     opacity: 1;
+    //     transition: $near $snap all;
+    //     &:nth-of-type(1),
+    //     &:nth-of-type(2) {
+    //       transform: translateY(0);
+    //       margin-top: ($gap/2)+0px;
+    //     }
+    //   }
+    // }
     i {
       display: block;
       width: $searchbar + 0px;
@@ -825,7 +875,7 @@ svg.icon {
       border: 1px solid rgba(#eee, 0);
       color: currentColor;
       background: none;
-      border-radius: 3px;
+      border-radius: var(--br, 3px);
       padding: 0;
       z-index: 1;
       &:focus {
@@ -882,11 +932,13 @@ svg.icon {
   min-height: 40px;
   z-index: 2;
 
+  &__view,
   &__sort {
     display: flex;
     align-items: center;
     font-size: inherit;
-    padding-right: 10px;
+    padding-right: #{$gap}px;
+    margin-right: #{$gap}px;
     border-right: 1px solid var(--figma-color-border);
     .select-menu__button {
       font-size: inherit;
@@ -908,7 +960,7 @@ svg.icon {
       color: var(--accent);
       padding: ($gap/2) + 0px ($gap/3) + 0px;
       font-weight: normal;
-      border-radius: 3px;
+      border-radius: var(--br, 3px);
       &:hover {
         background-color: var(--figma-color-bg-secondary);
       }
@@ -928,7 +980,7 @@ svg.icon {
       list-style-type: none;
       border: 1px solid var(--figma-color-border);
       background-color: var(--figma-color-bg);
-      border-radius: 3px;
+      border-radius: var(--br, 3px);
       margin-top: ($gap/3)+0px;
       overflow: hidden;
       transform: translateY(-100%);
@@ -949,9 +1001,16 @@ svg.icon {
     }
   }
   &__ver {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     margin-left:auto;
     font-size: 10px;
     align-self: center;
+    .icon {
+      font-size: 14px;
+    }
   }
 }
 
@@ -966,13 +1025,57 @@ svg.icon {
     @include custom-scrollbar();
   }
   &.favourites-grid {
+    display: flex;
+    min-height: 70px;
     background-color: var(--figma-color-bg-tertiary);
-    p {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-gutter: revert;
+    @include custom-scrollbar($d: 'v', $s: 0);
+
+    &:before{
+      content: '';
+      position: sticky;
+      top: 0;
+      bottom: 0;
+      display: block;
+      width: $gap + 0px;
+      flex-shrink: 0;
+      z-index: 2;
+    }
+    &:before {
+      left: -#{$gap}px;
+      margin-left: -#{$gap}px;
+      background-image: linear-gradient(to right, var(--figma-color-bg-tertiary), rgba(#000,0));
+    }
+    
+    .icon-grid {
+      --grid-min-width: 50px;
+      grid-template-columns: repeat(auto-fill, var(--grid-min-width));
+      grid-template-rows: var(--grid-min-width);
+      grid-auto-flow: column;
+      &--item {
+        scroll-snap-align: start;
+        border-radius: 1e3px;
+        padding: 0;
+        h3, p {
+          display: none;
+        }
+      }
+      &:after {
+        content:'';
+        width: 1px;
+      }
+    }
+    > p {
       font-size: 12px;
       text-align: center;
       padding: 0px;
-      margin: 0;
+      margin: auto;
       font-weight: 600;
+      + .icon-grid {
+        display: none;
+      }
     }
   }
 }
@@ -985,8 +1088,7 @@ svg.icon {
   width: 100%;
   grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
   grid-auto-rows: min-content;
-  grid-column-gap: $gap + 0px;
-  grid-row-gap: $gap + 0px;
+  gap: $gap + 0px;
   grid-auto-flow: dense;
 
   &--item {
@@ -998,7 +1100,7 @@ svg.icon {
       justify-content: center;
       min-width: var(--grid-min-width);
       padding: 1rem;
-      border-radius: 6px;
+      border-radius: var(--br, 3px);
       text-align: center;
       overflow: hidden;
       outline-offset: ($gap/2 - ($border-width/2))+0px;
@@ -1047,7 +1149,37 @@ svg.icon {
       position: absolute;
       top: 0;
       right: 0;
-      border-radius: 4px;
+      border-radius: var(--br, 3px);
+    }
+  }
+
+  &.list-view {
+    --grid-min-width: 62px;
+    grid-template-columns: 1fr;
+    .icon-grid--item {
+      &:not(.btn) {
+        display: grid;
+        grid-template-columns: var(--grid-min-width) 1fr;
+        grid-template-rows: 1fr 1fr;
+        text-align: left;
+        padding: 0;
+      }
+      h3, p, span {
+        padding: 1rem;
+      }
+      span {
+        display: flex;
+        align-items: center;
+        grid-column: 1;
+        grid-row: 1 / 3;
+      }
+      h3 {
+        margin: 0;
+        padding-bottom: 0;
+      }
+      p {
+        padding-top: 0;
+      }
     }
   }
 }
