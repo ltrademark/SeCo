@@ -130,6 +130,7 @@
     background-color: var(--figma-color-bg-secondary);
     border-radius: var(--br, 3px);
     padding: 1rem;
+    user-select: none;
     > * {
      margin: 0;
     }
