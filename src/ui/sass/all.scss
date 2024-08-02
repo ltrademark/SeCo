@@ -53,8 +53,8 @@ code {
 
 .btn {
   position: relative;
-  @include buttonDefault();
   z-index: 1;
+  @include buttonDefault();
   &:focus,
   &:hover {
     outline: none;
@@ -88,7 +88,7 @@ code {
       background-color: setcolor($selectedTheme, bg);
     }
     &:not(.active) {
-      outline-offset: ($gap/2 - ($border-width/2))+0px;
+      outline-offset: calc($gap/2 - calc($border-width/2))+0px;
       &:focus,
       &:hover {
         outline: $border-width+0px dashed #ccc;
@@ -154,6 +154,16 @@ code {
 .popup-leave-to{
   opacity: 0;
 	transform: translatey(100%);
+}
+
+.popin-enter-active, 
+.popin-leave-active {
+  transition: $near $snap all;
+}
+.popin-enter, 
+.popin-leave-to{
+  opacity: 0;
+	transform: translatey(-100%);
 }
 
 #simple {
@@ -338,7 +348,7 @@ code {
 		border-radius: 3px;
 		text-align: center;
 		overflow: hidden;
-		outline-offset: ($gap/2 - ($border-width/2))+0px;
+		outline-offset: calc($gap/2 - calc($border-width/2))+0px;
 		user-select: none;
 		> * {
 			margin-top: 0;
@@ -413,7 +423,7 @@ code {
 		}
     &-actions {
       button {
-        margin: ($gap/2)+0px;
+        margin: calc($gap/2)+0px;
       }
     }
 	}

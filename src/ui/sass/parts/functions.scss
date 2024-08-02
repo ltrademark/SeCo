@@ -1,9 +1,12 @@
+@use 'sass:math';
+
 @function setcolor($pallet, $type) {
  @return map-get(map-get($theme, $pallet), $type);
 }
 @function font($to, $from, $toWidth, $fromWidth) {
-$slope: ($to - $from) / ($toWidth - $fromWidth);
-$base: $from - $slope * $fromWidth;
+  // $slope: ($to - $from) / ($toWidth - $fromWidth);
+  $slope: calc(($to - $from) / ($toWidth - $fromWidth));
+  $base: $from - $slope * $fromWidth;
 
 @return calc(#{$base} + #{100vw * $slope});
 }

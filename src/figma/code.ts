@@ -10,7 +10,7 @@ startUI();
 async function startUI() {
   figma.showUI(__html__, { 
     width: 350,
-    height: 600,
+    height: 610,
     themeColors: true
   });
   figma.clientStorage.getAsync('faves').then(faves => {

@@ -57,7 +57,7 @@
         alt="loading icon"
       />
     </div>
-    <transition name="fade" mode="out-in">
+    <transition name="popin" mode="out-in">
       <div class="grid-wrap favourites-grid" v-if="showFavourites">
         <p v-if="favouritedIcons.length < 1">Add some icons to your Favourites</p>
         <div class="icon-grid">
@@ -100,12 +100,12 @@
           <div class="icon-grid--item load-more btn btn--secondary"
               @click="loadMore"
               v-if="itemsLoaded < icons.length && isearch === ''">
-            Load {{ specialTrigger ? 'Everything' : `${itemsLoaded} More` }}
+              Load {{ specialTrigger ? `Everything (${formattedIconCount})` : `${loadInc} More` }}
           </div>
         </transition>
       </div>
     </div>
-    <transition name="popup" mode="in-out">
+    <transition name="popup" mode="out-in">
       <selection-banner
         :llave="handleIcons(selectedIcon).title"
         :selected="selectedIcon"
@@ -126,18 +126,20 @@
 
 <script>
 import whatsNew from './whatsNew';
+import axios from 'axios';
 
-const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0';
+const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons';
 
 export default {
   data() {
     return {
-      version: '4.0',
+      version: '4.1',
       loaded: false,
       icons: [],
       favouritedIcons: [],
       selectedIcon: null,
       itemsLoaded: 15,
+      loadInc: 15,
       isearch: '',
       viewAsList: false,
       viewAsGrid: true,
@@ -149,7 +151,7 @@ export default {
       showMobileSorts: false,
       whatsNewModalOpen: false,
       darkMode: false,
-      SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons@7.9.0'
+      SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons'
     };
   },
   filters: {
@@ -186,50 +188,81 @@ export default {
     },
     svgname(icon) {
       let url = SimpleIconsSource + '/icons/';
-      let label = icon;
-      
-      switch(true) {
-        case icon.indexOf(' ') > -1:
-          label = label.toLowerCase().replaceAll(/\s/g, ''); // has space
-        case icon.indexOf('’') > -1:
-          label = label.toLowerCase().replaceAll(/\’/g, ''); // has Smartquote
-        case icon.includes("'"):
-          label = label.toLowerCase().replaceAll(/\'/g, ''); // has normal quote
-        case icon.includes('&'):
-          label = label.toLowerCase().replaceAll('&', 'and'); // has ampersand
-        case icon.includes('-'):
-          label = label.toLowerCase().replaceAll('-', ''); // has hyphen
-        case icon.includes('_'):
-          label = label.toLowerCase().replaceAll('_', ''); // has underscore
-        case icon.includes(':'):
-          label = label.toLowerCase().replaceAll(/\:/g, ''); // has colon
-        case icon.includes('+'):
-          label = label.toLowerCase().replaceAll(/[+]/g, 'plus'); // has plus
-        case icon.includes('!'):
-          label = label.toLowerCase().replaceAll(/\!/g, ''); // has exclamation mark
-        case icon.includes('/'):
-          label = label.toLowerCase().replaceAll(/\//g, ''); // has forward slash
-        case icon.includes('°'):
-          label = label.toLowerCase().replaceAll('°', ''); // has temperature symbol
-        case icon.includes('.1'):
-          label = label.toLowerCase().replaceAll('.1', '1'); // VERY specific edgecase that has dot with 1
-        case label.includes('.'):
-          if((label.match(/[.]/g) !== null ? label.match(/[.]/g) : []).length > 1) {
-            label = label.toLowerCase().replace(/\./g, ''); // has multiple periods
-          } else if(label.endsWith('.')) {
-            label = label.toLowerCase().replace('.', ''); // has period at the end
-          } else {
-            label = label.toLowerCase().replace(/\./g, 'dot'); // has period anywhere
-          }
-        default:
-          label = label.toLowerCase();
+      let label = icon.toLowerCase();
+
+      // VERY specific edge cases
+      if (icon.includes('Amazon Identity Access Management')) {
+        label = label.replace(' identity access management', 'iam');
       }
+      if (icon.includes('OWASP Dependency-Check')) {
+        label = label.replace('owasp dependency-check', 'dependencycheck');
+      }
+      if (icon.includes('Tata Consultancy Services')) {
+        label = label.replace('tata consultancy services', 'tcs');
+      }
+      if (icon.includes('Sphere Online Judge')) {
+        label = label.replace('sphere online judge', 'spoj');
+      }
+      if (icon.includes('1.1.1.1')) {
+        label = label.replace('1.1.1.1', '1dot1dot1dot1');
+      }
+      if (icon.includes('Sat.1')) {
+        label = label.replace('.1', '1');
+      }
+
+      // General cases
+      if (icon.includes(' ')) {
+        label = label.replaceAll(/\s/g, '');
+      }
+      if (icon.includes('’')) {
+        label = label.replaceAll(/\’/g, '');
+      }
+      if (icon.includes("'")) {
+        label = label.replaceAll(/\'/g, '');
+      }
+      if (icon.includes('&')) {
+        label = label.replaceAll('&', 'and');
+      }
+      if (icon.includes('#')) {
+        label = label.replaceAll('#', 'sharp');
+      }
+      if (icon.includes('-')) {
+        label = label.replaceAll('-', '');
+      }
+      if (icon.includes('_')) {
+        label = label.replaceAll('_', '');
+      }
+      if (icon.includes(':')) {
+        label = label.replaceAll(/\:/g, '');
+      }
+      if (icon.includes('+')) {
+        label = label.replaceAll(/[+]/g, 'plus');
+      }
+      if (icon.includes('!')) {
+        label = label.replaceAll(/\!/g, '');
+      }
+      if (icon.includes('/')) {
+        label = label.replaceAll(/\//g, '');
+      }
+      if (icon.includes('°')) {
+        label = label.replace('°', '');
+      }
+      if (label.includes('.')) {
+        if ((label.match(/[.]/g) || []).length > 1) {
+          label = label.replace(/\./g, ''); // multiple periods
+        } else if (label.endsWith('.')) {
+          label = label.replace('.', ''); // period at the end
+        } else {
+          label = label.replaceAll(/\./g, 'dot'); // single period
+        }
+      };
+      
       let cleanLabel = label.normalize('NFD').replace(/\p{Diacritic}/gu, "");
       return url + cleanLabel + '.svg';
     },
     sanitizeURL(url) {
       return url.slice(url.lastIndexOf('/') + 1, url.length);
-    },
+    }
   },
   computed: {
     filteredIcons() {
@@ -268,17 +301,21 @@ export default {
           padding = loadHeight + gap;
 
       return 'padding-bottom: ' + padding + 'px';
+    },
+    formattedIconCount() {
+      return this.commify(this.filteredIcons.length);
     }
   },
   methods: {
     getSimple() {
-      this.$http.get(this.SimpleIconsSource + '/_data/simple-icons.json').then((res) => {
+      axios.get(this.SimpleIconsSource + '/_data/simple-icons.json').then((res) => {
         this.icons = res.data.icons;
         // Assigns an initial index and hue to the recieved array for more accurate sorting and searching
         for (let i = 0; i < this.icons.length; i++) {
           this.icons[i].icons_index = i;
           this.icons[i].hsl = this.getHSL(this.icons[i].hex);
           this.icons[i].rgb = this.getRGB(this.icons[i].hex);
+          // this.icons[i].icon_name = this.$options.filters.svgname(this.icons[i].title);
         }
         this.loaded = true;
       }, (error) => {
@@ -328,12 +365,12 @@ export default {
     },
     loadMore() {
       let loadInt = Math.floor(document.getElementsByClassName('icon-grid')[0].clientWidth / document.getElementsByClassName('icon-grid--item')[0].clientWidth) * 2;
-
+      // this should *technically* be loading 6 items at a time.
       if (this.specialTrigger) {
         this.itemsLoaded = this.icons.length;
       } else {
         if (this.itemsLoaded < this.icons.length)
-          this.itemsLoaded = loadInt + this.itemsLoaded;
+          this.itemsLoaded = this.itemsLoaded + this.loadInc;
       }
       return;
     },
@@ -459,6 +496,10 @@ export default {
           hasPeriod = name.includes('.');
           let labelIsDirty = hasSpace || hasSmartquote || hasNormalquote || hasAmp || hasHyphen || hasColon || hasPlus || hasExcl || hasFSlash || hasPeriod;
       return labelIsDirty;
+    },
+    commify(num) {
+      if (isNaN(num)) return num;
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
   },
   mounted() {
@@ -596,6 +637,7 @@ export default {
 </script>
 
 <style lang="scss">
+@use 'sass:math';
 @import '../sass/parts/config.scss';
 
 :root {
@@ -603,7 +645,12 @@ export default {
   --accent: var(--figma-color-bg-brand);
   --accent-hover: var(--figma-color-bg-brand-hover);
   --accent-active: var(--figma-color-bg-brand-pressed);
-  --br: 3px;
+  --radius-full: 9999px;
+  --radius-large: .8125rem;
+  --radius-medium: .3125rem;
+  --radius-small: .125rem;
+  --radius-none: 0;
+  --border-radius: var(--radius-large);
   font-size: 8px;
 }
 
@@ -725,14 +772,14 @@ svg.icon {
   }
 }
 .hide-on-mobile {
+  display: block;
+  visibility: visible;
+  opacity: 1;
   @include respond-to('mobile') {
     // display: none;
     visibility: hidden;
     opacity: 0;
   }
-  display: block;
-  visibility: visible;
-  opacity: 1;
 }
 
 .fade-enter-active,
@@ -745,13 +792,21 @@ svg.icon {
 }
 
 .popup-enter-active,
-.popup-leave-active {
+.popup-leave-active,
+.popin-enter-active, 
+.popin-leave-active {
   transition: $near $snap all;
 }
 .popup-enter,
 .popup-leave-to {
   opacity: 0;
   transform: translatey(100%);
+}
+
+.popin-enter, 
+.popin-leave-to{
+  opacity: 0;
+	transform: translatey(-100%);
 }
 
 .zoomin-enter-active,
@@ -814,7 +869,7 @@ svg.icon {
     color: inherit;
     font-size: 18px;
     z-index: 1;
-    border-radius: var(--br, 3px);
+    border-radius: var(--border-radius, 3px);
     &:hover {
      background-color: var(--figma-color-bg-secondary);
     }
@@ -823,35 +878,6 @@ svg.icon {
       color: setcolor($selectedTheme, fg);
       background-color: darken(setcolor($selectedTheme, bg), 10%);
     }
-    // @include respond-to('mobile') {
-    //   &.hide-on-mobile {
-    //     $newGap: $gap/2;
-    //     position: absolute;
-    //     right: 0px;
-    //     background-color: setcolor($selectedTheme, bg);
-    //     transition: $near $snap opacity;
-
-    //     &:nth-of-type(1) {
-    //       top: ($searchbar + $newGap)+0px;
-    //       transform: translateY(-($searchbar + $newGap)+0px);
-    //     }
-    //     &:nth-of-type(2) {
-    //       top: (($searchbar * 2) + ($newGap * 2))+0px;
-    //       transform: translateY(-(($searchbar * 2) + ($newGap * 2))+0px);
-    //     }
-    //   }
-    //   &.open {
-    //     display: block;
-    //     visibility: visible;
-    //     opacity: 1;
-    //     transition: $near $snap all;
-    //     &:nth-of-type(1),
-    //     &:nth-of-type(2) {
-    //       transform: translateY(0);
-    //       margin-top: ($gap/2)+0px;
-    //     }
-    //   }
-    // }
     i {
       display: block;
       width: $searchbar + 0px;
@@ -875,7 +901,7 @@ svg.icon {
       border: 1px solid rgba(#eee, 0);
       color: currentColor;
       background: none;
-      border-radius: var(--br, 3px);
+      border-radius: var(--border-radius, 3px);
       padding: 0;
       z-index: 1;
       &:focus {
@@ -958,9 +984,9 @@ svg.icon {
       display: flex;
       align-items: center;  
       color: var(--accent);
-      padding: ($gap/2) + 0px ($gap/3) + 0px;
+      padding: calc($gap/2) + 0px calc($gap/3) + 0px;
       font-weight: normal;
-      border-radius: var(--br, 3px);
+      border-radius: var(--border-radius, 3px);
       &:hover {
         background-color: var(--figma-color-bg-secondary);
       }
@@ -980,8 +1006,8 @@ svg.icon {
       list-style-type: none;
       border: 1px solid var(--figma-color-border);
       background-color: var(--figma-color-bg);
-      border-radius: var(--br, 3px);
-      margin-top: ($gap/3)+0px;
+      border-radius: var(--border-radius, 3px);
+      margin-top: calc($gap/3)+0px;
       overflow: hidden;
       transform: translateY(-100%);
       visibility: hidden;
@@ -993,7 +1019,7 @@ svg.icon {
         visibility: visible;
       }
       li {
-        padding: ($gap/2) + 0px $gap + 0px;
+        padding: calc($gap/2) + 0px $gap + 0px;
         &:hover {
           background-color: var(--figma-color-bg-secondary);
         }
@@ -1022,6 +1048,8 @@ svg.icon {
   &:not(.favourites-grid) {
     overflow-x: hidden;
     overflow-y: auto;
+    max-height: 100%;
+    transition: $near $curve max-height;
     @include custom-scrollbar();
   }
   &.favourites-grid {
@@ -1078,6 +1106,9 @@ svg.icon {
       }
     }
   }
+  &:has(.grid-wrap + .notification-toast) {
+    padding-bottom: 80px;
+  }
 }
 
 .icon-grid {
@@ -1100,10 +1131,10 @@ svg.icon {
       justify-content: center;
       min-width: var(--grid-min-width);
       padding: 1rem;
-      border-radius: var(--br, 3px);
+      border-radius: var(--border-radius, 3px);
       text-align: center;
       overflow: hidden;
-      outline-offset: ($gap/2 - ($border-width/2))+0px;
+      outline-offset: calc($gap/2 - ($border-width/2))+0px;
       user-select: none;
     }
     > * {
@@ -1149,7 +1180,7 @@ svg.icon {
       position: absolute;
       top: 0;
       right: 0;
-      border-radius: var(--br, 3px);
+      border-radius: var(--border-radius, 3px);
     }
   }
 
@@ -1185,14 +1216,16 @@ svg.icon {
 }
 
 .notification-toast {
-  position: fixed;
+  // position: fixed;
+  position: relative;
   bottom: 0;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
+  border-top: 1px solid var(--figma-color-border);
+  margin-top: auto;
   z-index: 1;
-  // padding: ($gap/2)+0px;
   &.selection {
     .bubble {
       display: flex;
@@ -1218,13 +1251,13 @@ svg.icon {
   .bubble {
     background-color: var(--figma-color-bg);
     color: var(--figma-color-text);
+    text-align: center;
+    padding: calc($gap/2)+0px;
+    font-size: 1.5rem;
+    font-weight: 900;
     @supports (backdrop-filter: blur(10px)) {
       backdrop-filter: saturate(180%) blur(10px);
     }
-    text-align: center;
-    padding: ($gap/2)+0px;
-    font-size: 1.5rem;
-    font-weight: 900;
     p {
       margin: 0;
     }
@@ -1235,7 +1268,7 @@ svg.icon {
         align-items: center;
         flex: 1 1 40%;
         min-width: unset;
-        margin: ($gap/2)+0px;
+        margin: calc($gap/2)+0px;
         &.button--primary {
           width: 100%;
         }
@@ -1247,61 +1280,4 @@ svg.icon {
   }
 }
 
-.lights-out {
-  @include theme('dark');
-  .btn {
-    &-secondary {
-      background-color: setcolor('dark', bg);
-    }
-    &-default {
-      background-color: rgba(setcolor('dark', fg), 0.055);
-      &:focus,
-      &:hover {
-        background-color: setcolor('dark', bg);
-      }
-    }
-  }
-  .icon-search {
-    &:before {
-      filter: invert(1);
-    }
-    &:after {
-      background-color: rgba(setcolor('dark', bg), 0.9);
-    }
-  }
-  button {
-    &.active {
-      color: setcolor('dark', fg);
-      background-color: darken(setcolor('dark', bg), 10%);
-    }
-  }
-  input {
-    color: inherit;
-    background-color: rgba(setcolor('dark', fg), 0.055);
-    &:focus {
-      color: inherit;
-      background-color: setcolor('dark', bg);
-    }
-  }
-  code {
-    background-color: rgba(setcolor('dark', fg), 0.3);
-  }
-  .notification-toast {
-    .bubble {
-      @include theme('dark');
-      background-color: rgba(setcolor('dark', bg), 0.9);
-      &-details {
-        img {
-          filter: invert(1);
-        }
-      }
-    }
-  }
-  @include respond-to('mobile') {
-    .hide-on-mobile {
-      color: setcolor('dark', fg) !important;
-      background-color: setcolor('dark', bg) !important;
-    }
-  }
-}
 </style>

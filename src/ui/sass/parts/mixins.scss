@@ -48,15 +48,13 @@
   }
 }
 @mixin buttonDefault() {
-  // -webkit-tap-highlight-color: rgba(#000, 0);
-  // cursor: pointer;
   display: flex;
   justify-content: center;
   gap: .5rem;
   min-width: 150px;
   font-size: 11px;
   font-weight: 500;
-  border-radius: var(--br, 3px);
+  border-radius: var(--border-radius, 3px);
   padding: 1rem;
   outline: none;
   border: none;

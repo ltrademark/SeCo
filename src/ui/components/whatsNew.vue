@@ -4,13 +4,13 @@
   <div class="mini-modal">
    <div class="mini-modal--header">
     <h4>Whats New?</h4>
-    <b @click="$parent.whatsNewModalOpen=false"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 21L21 9M21 21L9 9" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></b>
+    <b @click="$parent.whatsNewModalOpen=false"><svg width="30" height="30" viewBox="0 0 30 30" style="width: auto; height: 1.25em;" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 21L21 9M21 21L9 9" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></b>
    </div>
    <div class="mini-modal--body">
     <div class="brand-group">
      <img src="https://static.basedcdn.com/madebyLTM/src/assets/plugin-icon-v3.png" alt="logo" />
      <h3>SeCo</h3>
-     <sup>Copyright &copy; 2022. Ltrademark&trade; All Rights Reserved</sup>
+     <sup>Copyright &copy; 2024. Ltrademark&trade; All Rights Reserved</sup>
     </div>
     <h4>✨ Changes in v{{currentVer}}</h4>
     <ul>
@@ -18,7 +18,7 @@
     </ul>
    </div>
    <div class="mini-modal--footer">
-    <a href="https://ltrdmrk.co" target="_blank">made with ❤ by Ltrademark</a>
+    <a href="https://ltrademark.com" target="_blank">made with ❤ by Ltrademark</a>
     <a class="btn btn-secondary" href="https://github.com/ltrademark/SeCo/issues/new/choose" target="_blank">Report a bug</a>
    </div>
   </div>
@@ -30,13 +30,8 @@
    return {
     currentVer: this.$parent.version,
     changelog: [
-     'This modal is pretty new, and it came with this update',
-     'Dark mode support is now here',
-     'Added list view',
-     'Updated icon repository',
-     'Favourites has a new look',
-     'Icons favourited in normal grid, now have indicator',
-     'Holding the shift key turn the load more button, to load everything.'
+     'Updated CDN version to master branch (instead of staggered versions)',
+     'Updating any older references to my website. (non-functional update)',
     ]
    }
   }
@@ -56,7 +51,7 @@
   color: var(--figma-color-text);
   background-color: var(--figma-color-bg);
   border: 1px solid var(--figma-color-border);
-  border-radius: var(--br, 3px);
+  border-radius: calc(var(--border-radius) * 1.3);
   box-shadow: 0px 10px 16px rgba(0, 0, 0, .35), 
               0px 2px 5px rgba(0, 0, 0, .35), 
               inset 0px 1px 0px rgba(255, 255, 255, .08), 
@@ -93,8 +88,14 @@
     font-family: sans-serif;
    }
    b {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
     margin-left: auto;
-    border-radius: var(--br, 3px);
+    border-radius: var(--radius-medium);
     &:hover {
      background-color: var(--figma-color-bg-secondary);
     }
@@ -128,7 +129,7 @@
     text-align: center;
     margin-bottom: 1rem;
     background-color: var(--figma-color-bg-secondary);
-    border-radius: var(--br, 3px);
+    border-radius: var(--border-radius, 3px);
     padding: 1rem;
     user-select: none;
     > * {
