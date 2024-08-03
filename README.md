@@ -18,6 +18,8 @@ A icon and color search library for your mockups and projects. Utilizes library 
 - Then, with hopefully no errors, run `yarn dev` to start running the plugin.
 - Run the plugin in Figma to test (be sure to have that console open, just in case).
 
+> For outdated packages, run `yarn outdated` to see what is upgradable, deprecated, etc.
+
 ---
 
 ## ✅ To Do
