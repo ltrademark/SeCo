@@ -17,7 +17,7 @@
      <li v-for="change in changelog" :key="change">{{ change }}</li>
     </ul>
     <transition name="fade">
-      <div v-if="toastMessage" class="toast-message">{{ toastMessage }}</div>
+      <div v-if="toastMessage" :style="{'--toast-bg' : importError ? '#c50f0f' : '#119400'}" class="toast-message">{{ toastMessage }}</div>
     </transition>
   </div>
   <div class="mini-modal--advActions">
@@ -48,7 +48,8 @@
      'Updated codebase for better performance',
      'Favourites broke often, so new method implemented to fix that.',
     ],
-    toastMessage: ''
+    toastMessage: '',
+    importError: false
    }
   },
   methods: {
@@ -75,18 +76,25 @@
           // Safety check: Only keep icons that exist in the current icon list
           const validIds = new Set(this.$parent.icons.map(icon => icon.icons_id));
           const validFaves = imported.filter(icon => validIds.has(icon.icons_id));
-          this.$parent.favouritedIcons = validFaves;
-            this.$parent.updateFavourites();
-            this.toastMessage = `Imported ${validFaves.length} valid favourites.`;
-            setTimeout(() => {
-              this.toastMessage = '';
-              this.$parent.whatsNewModalOpen = false;
-            }, 2000);
+          // Repair: match by title and hex, replace with correct icon from icons array
+          const iconsMap = new Map(this.$parent.icons.map(icon => [`${icon.title}|${icon.hex}`, icon]));
+          const repairedFaves = imported
+            .map(icon => iconsMap.get(`${icon.title}|${icon.hex}`))
+            .filter(Boolean);
+          this.$parent.favouritedIcons = repairedFaves;
+          this.$parent.updateFavourites();
+          this.toastMessage = `Favourites Imported Successfully`;
+          setTimeout(() => {
+            this.toastMessage = '';
+            this.$parent.whatsNewModalOpen = false;
+          }, 2000);
         } catch (err) {
-            this.toastMessage = 'Failed to import favourites: Invalid JSON file.';
-            setTimeout(() => {
-              this.toastMessage = '';
-            }, 2500);
+          this.importError = true;
+          this.toastMessage = 'Failed to import favourites: Invalid JSON file';
+          setTimeout(() => {
+            this.toastMessage = '';
+            this.importError = false;
+          }, 2500);
         }
       };
       reader.readAsText(file);
@@ -206,6 +214,7 @@
     display: flex;
     gap: $gap + 0px;
     justify-content: center;
+    flex-wrap: wrap;
     padding: 1rem;
     border-top: 1px solid var(--figma-color-border);
     .btn {
@@ -213,6 +222,7 @@
       min-width: unset;
       gap: calc($gap/2)+0px;
       white-space: nowrap;
+      flex: 1 1 40%;
     }
     [hidden] {
       display: none;
@@ -246,7 +256,8 @@
    top: 50%;
    transform: translate(-50%, -50%);
    @include buttonDefault();
-   background-color: #119400;
+   text-align: center;
+   background-color: var(--toast-bg);
    color: #fff;
    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
    font-size: 12px;
