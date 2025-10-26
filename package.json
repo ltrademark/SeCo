@@ -23,7 +23,7 @@
     "not ie <= 8"
   ],
   "engines": {
-    "node": "16.x"
+    "node": "23.x"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",

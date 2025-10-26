@@ -1,14 +1,18 @@
+@use "sass:map";
+@use "sass:string";
+@use 'variables' as *;
+
 @mixin respond-to($breakpoint, $dir: 'desktop-first') {
-	@if map-has-key($breakpoints, $breakpoint) {
-		$value: map-get($breakpoints, $breakpoint);  
+	@if map.has-key($breakpoints, $breakpoint) {
+		$value: map.get($breakpoints, $breakpoint);  
     $width: '';
 		
     @if $dir=='mobile-first' {
-      $width: unquote('min-width');
+      $width: string.unquote('min-width');
     }
 
     @else {
-      $width: unquote('max-width');
+      $width: string.unquote('max-width');
     }
 
     @media screen and (#{$width}: $value) {

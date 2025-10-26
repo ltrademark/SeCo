@@ -30,16 +30,18 @@
    return {
     currentVer: this.$parent.version,
     changelog: [
-     'Updated CDN version to master branch (instead of staggered versions)',
-     'Updating any older references to my website. (non-functional update)',
+     'Fixed icon loading issues for some users',
+     'Updated codebase for better performance',
     ]
    }
   }
  }
 </script>
 <style lang="scss">
- @import '../sass/parts/config.scss';
- 
+  @use "sass:color";
+  @use 'sass:math';
+  @use "../sass/parts/config" as *;
+  
  .mini-modal {
   position: relative;
   display: grid;

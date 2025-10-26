@@ -133,7 +133,7 @@ const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons';
 export default {
   data() {
     return {
-      version: '4.1',
+      version: '4.2',
       loaded: false,
       icons: [],
       favouritedIcons: [],
@@ -309,7 +309,7 @@ export default {
   methods: {
     getSimple() {
       axios.get(this.SimpleIconsSource + '/_data/simple-icons.json').then((res) => {
-        this.icons = res.data.icons;
+        this.icons = res.data || res.data.icons;
         // Assigns an initial index and hue to the recieved array for more accurate sorting and searching
         for (let i = 0; i < this.icons.length; i++) {
           this.icons[i].icons_index = i;
@@ -637,647 +637,651 @@ export default {
 </script>
 
 <style lang="scss">
-@use 'sass:math';
-@import '../sass/parts/config.scss';
+  @use "sass:color";
+  @use 'sass:math';
+  @use "../sass/parts/config" as *;
+  // @use "../sass/parts/variables" as *;
+  // @use "../sass/parts/mixins" as *;
+  // @use "../sass/parts/functions" as *;
 
-:root {
-  --theme: 'light';
-  --accent: var(--figma-color-bg-brand);
-  --accent-hover: var(--figma-color-bg-brand-hover);
-  --accent-active: var(--figma-color-bg-brand-pressed);
-  --radius-full: 9999px;
-  --radius-large: .8125rem;
-  --radius-medium: .3125rem;
-  --radius-small: .125rem;
-  --radius-none: 0;
-  --border-radius: var(--radius-large);
-  font-size: 8px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  width: 100%;
-  height: 100%;
-  font-family: $fontfam;
-  background-color: var(--figma-color-bg);
-  color: var(--figma-color-text);
-	font-size: font(22px, 16px, 786px, 320px);
-  margin: 0;
-}
-
-a {
-  text-decoration: none;
-  color: var(--accent);
-  font-weight: 700;
-  &:hover,
-  &:focus {
-    border-bottom: $border-width + 0px dashed #ccc;
+  :root {
+    --theme: 'light';
+    --accent: var(--figma-color-bg-brand);
+    --accent-hover: var(--figma-color-bg-brand-hover);
+    --accent-active: var(--figma-color-bg-brand-pressed);
+    --radius-full: 9999px;
+    --radius-large: .8125rem;
+    --radius-medium: .3125rem;
+    --radius-small: .125rem;
+    --radius-none: 0;
+    --border-radius: var(--radius-large);
+    --font-family: 'Inter', sans-serif;
+    font-size: 8px;
   }
-  &:visited {
-    font-style: italic;
-    border-bottom: $border-width + 0px dashed  var(--accent);
-  }
-}
 
-.loader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 3.5em;
-  font-weight: 700;
-  padding: $gap + 0px;
-  width: 100%;
-  text-align: center;
-}
-.button--primary:enabled:active {
-  border: none !important;
-}
-svg.icon {
-  color: var(--figma-color-text);
-  width: auto;
-  height: 1em;
-}
-.btn {
-  --btn-fg: var(--figma-color-text);
-  --btn-bg: var(--figma-color-bg);
-
-  position: relative;
-  @include buttonDefault();
-  color: var(--btn-fg);
-  background-color: var(--btn-bg);
-  z-index: 1;
-  &:focus,
-  &:hover {
-    --btn-bg: var(--figma-color-bg-secondary);
-    outline: none;
+  * {
+    box-sizing: border-box;
   }
-  &--primary {
-    --btn-fg: #fff;
-    --btn-bg: var(--accent);
-    &:focus,
-    &:hover {
-      --btn-bg: var(--accent-hover);
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-family);
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    font-size: font(22px, 16px, 786px, 320px);
+    margin: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 700;
+    &:hover,
+    &:focus {
+      border-bottom: $border-width + 0px dashed #ccc;
+    }
+    &:visited {
+      font-style: italic;
+      border-bottom: $border-width + 0px dashed  var(--accent);
     }
   }
-  &--secondary {
-    border: 1px solid currentColor !important;
-    &:focus,
-    &:hover {
-      --btn-bg: var(--figma-color-bg-secondary);
-      border-color: var(--figma-color-bg-tertiary);
-    }
-  }
-  &--default {
-    color: inherit;
-    user-select: none;
-    border: 1px solid var(--figma-color-border);
-    &:focus,
-    &:hover {
-      --btn-bg: var(--accent-hover);
-    }
-  }
-  &-square {
-    padding: 0;
+
+  .loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 3.5em;
+    font-weight: 700;
+    padding: $gap + 0px;
+    width: 100%;
     text-align: center;
-    min-width: $searchbar + 0px;
-    min-height: $searchbar + 0px;
   }
-  svg,
-  img {
-    display: inline-block;
-    vertical-align: middle;
+  .button--primary:enabled:active {
+    border: none !important;
+  }
+  svg.icon {
+    color: var(--figma-color-text);
     width: auto;
     height: 1em;
   }
-}
+  .btn {
+    --btn-fg: var(--figma-color-text);
+    --btn-bg: var(--figma-color-bg);
 
-.show-on-mobile {
-  // display: none;
-  position: absolute;
-  top: -100px;
-  right: -100px;
-  visibility: hidden;
-  opacity: 0;
-  @include respond-to('mobile') {
     position: relative;
-    top: 0;
-    right: 0;
+    @include buttonDefault();
+    color: var(--btn-fg);
+    background-color: var(--btn-bg);
+    z-index: 1;
+    &:focus,
+    &:hover {
+      --btn-bg: var(--figma-color-bg-secondary);
+      outline: none;
+    }
+    &--primary {
+      --btn-fg: #fff;
+      --btn-bg: var(--accent);
+      &:focus,
+      &:hover {
+        --btn-bg: var(--accent-hover);
+      }
+    }
+    &--secondary {
+      border: 1px solid currentColor !important;
+      &:focus,
+      &:hover {
+        --btn-bg: var(--figma-color-bg-secondary);
+        border-color: var(--figma-color-bg-tertiary);
+      }
+    }
+    &--default {
+      color: inherit;
+      user-select: none;
+      border: 1px solid var(--figma-color-border);
+      &:focus,
+      &:hover {
+        --btn-bg: var(--accent-hover);
+      }
+    }
+    &-square {
+      padding: 0;
+      text-align: center;
+      min-width: $searchbar + 0px;
+      min-height: $searchbar + 0px;
+    }
+    svg,
+    img {
+      display: inline-block;
+      vertical-align: middle;
+      width: auto;
+      height: 1em;
+    }
+  }
+
+  .show-on-mobile {
+    // display: none;
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    visibility: hidden;
+    opacity: 0;
+    @include respond-to('mobile') {
+      position: relative;
+      top: 0;
+      right: 0;
+      display: block;
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+  .hide-on-mobile {
     display: block;
     visibility: visible;
     opacity: 1;
+    @include respond-to('mobile') {
+      // display: none;
+      visibility: hidden;
+      opacity: 0;
+    }
   }
-}
-.hide-on-mobile {
-  display: block;
-  visibility: visible;
-  opacity: 1;
-  @include respond-to('mobile') {
-    // display: none;
-    visibility: hidden;
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: $far $curve all;
+  }
+  .fade-enter,
+  .fade-leave-to {
     opacity: 0;
   }
-}
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: $far $curve all;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-}
+  .popup-enter-active,
+  .popup-leave-active,
+  .popin-enter-active, 
+  .popin-leave-active {
+    transition: $near $snap all;
+  }
+  .popup-enter,
+  .popup-leave-to {
+    opacity: 0;
+    transform: translatey(100%);
+  }
 
-.popup-enter-active,
-.popup-leave-active,
-.popin-enter-active, 
-.popin-leave-active {
-  transition: $near $snap all;
-}
-.popup-enter,
-.popup-leave-to {
-  opacity: 0;
-  transform: translatey(100%);
-}
+  .popin-enter, 
+  .popin-leave-to{
+    opacity: 0;
+    transform: translatey(-100%);
+  }
 
-.popin-enter, 
-.popin-leave-to{
-  opacity: 0;
-	transform: translatey(-100%);
-}
+  .zoomin-enter-active,
+  .zoomin-leave-active {
+    transition: $far $curve all;
+  }
+  .zoomin-enter,
+  .zoomin-leave-to {
+    opacity: 0;
+    transform: scale(1.15);
+  }
 
-.zoomin-enter-active,
-.zoomin-leave-active {
-  transition: $far $curve all;
-}
-.zoomin-enter,
-.zoomin-leave-to {
-  opacity: 0;
-  transform: scale(1.15);
-}
+  #simple {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
 
-#simple {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-
-  .si-credits {
+    .si-credits {
+      width: 100%;
+      font-size: 0.8em;
+      text-align: center;
+    }
+  }
+  .icon-search {
+    position: relative;
+    display: flex;
+    align-items: center;
     width: 100%;
-    font-size: 0.8em;
-    text-align: center;
-  }
-}
-.icon-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 5px 10px;
-  color: var(--figma-color-text);
-  background-color: var(--figma-color-bg);
-  border-bottom: 1px solid var(--figma-color-border);
-  z-index: 2;
-  > svg {
-    height: 18px;
-    margin-left: 2px;
-  }
-  .input {
-    padding: 0 4px 0 7px;
-    border: none !important;
-    margin: 0;
+    padding: 5px 10px;
     color: var(--figma-color-text);
     background-color: var(--figma-color-bg);
-    &:hover {
-      color: inherit;
+    border-bottom: 1px solid var(--figma-color-border);
+    z-index: 2;
+    > svg {
+      height: 18px;
+      margin-left: 2px;
     }
-    &:focus,
-    &:active {
-      color: var(--figma-color-text);
+    .input {
       padding: 0 4px 0 7px;
-      padding-top: 0;
-      padding-bottom: 0;
+      border: none !important;
+      margin: 0;
+      color: var(--figma-color-text);
+      background-color: var(--figma-color-bg);
+      &:hover {
+        color: inherit;
+      }
+      &:focus,
+      &:active {
+        color: var(--figma-color-text);
+        padding: 0 4px 0 7px;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
     }
-  }
 
-  button {
-    background: none;
-    color: inherit;
-    font-size: 18px;
-    z-index: 1;
-    border-radius: var(--border-radius, 3px);
-    &:hover {
-     background-color: var(--figma-color-bg-secondary);
-    }
-    &.active {
-      box-shadow:0 0 0 $border-width + 0px $accent;
-      color: setcolor($selectedTheme, fg);
-      background-color: darken(setcolor($selectedTheme, bg), 10%);
-    }
-    i {
-      display: block;
-      width: $searchbar + 0px;
-      height: $searchbar + 0px;
-      color: currentColor;
-    }
-  }
-  &--container {
-    position: relative;
-    width: 100%;
-    height: $searchbar + 0px;
-    font-family: $fontfam;
-    font-weight: 900;
-
-    input {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      font-family: inherit;
-      font-weight: 400;
-      border: 1px solid rgba(#eee, 0);
-      color: currentColor;
+    button {
       background: none;
-      border-radius: var(--border-radius, 3px);
-      padding: 0;
+      color: inherit;
+      font-size: 18px;
       z-index: 1;
-      &:focus {
-        outline: none;
-      }
-    }
-    .icon {
-      width: 30px;
-      height: 30px;
-    }
-
-    i {
-      cursor: pointer;
-
-      position: absolute;
-      top: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: $searchbar + 0px;
-      height: $searchbar + 0px;
-      color: currentColor;
-      opacity: 0.54;
-      user-select: none;
-      z-index: 1;
-      &:hover {
-        opacity: 1;
-      }
-    }
-  }
-
-  .id-text {
-    position: absolute;
-    left: 0;
-    bottom: 5px;
-    padding-left: ($searchbar + ($gap * 2))+0px;
-    display: block;
-    text-align: right;
-    margin: 0;
-    z-index: 1;
-    opacity: 0.54;
-  }
-}
-.icon-actions {
-  position: relative;
-  display: flex;
-  width: 100%;
-  padding: 0px $gap + 0px;
-  font-size: 12px;
-  color: var(--figma-color-text);
-  background-color: var(--figma-color-bg);
-  border-bottom: 1px solid var(--figma-color-border);
-  min-height: 40px;
-  z-index: 2;
-
-  &__view,
-  &__sort {
-    display: flex;
-    align-items: center;
-    font-size: inherit;
-    padding-right: #{$gap}px;
-    margin-right: #{$gap}px;
-    border-right: 1px solid var(--figma-color-border);
-    .select-menu__button {
-      font-size: inherit;
-      margin-left: .5rem;
-      color: var(--accent);
-    }
-  }
-  &__select {
-    cursor: default;
-    user-select: none;
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding-left: .5rem;
-
-    b {
-      display: flex;
-      align-items: center;  
-      color: var(--accent);
-      padding: calc($gap/2) + 0px calc($gap/3) + 0px;
-      font-weight: normal;
       border-radius: var(--border-radius, 3px);
       &:hover {
-        background-color: var(--figma-color-bg-secondary);
+      background-color: var(--figma-color-bg-secondary);
       }
-      svg {
-        position: relative;
-        opacity: 1;
-        display: inline-block;
+      &.active {
+        box-shadow:0 0 0 $border-width + 0px $accent;
+        color: setcolor($selectedTheme, fg);
+        background-color: color.adjust(setcolor($selectedTheme, bg), $lightness: -10%);
+      }
+      i {
+        display: block;
+        width: $searchbar + 0px;
+        height: $searchbar + 0px;
         color: currentColor;
       }
     }
-    .select-options {
-      position: absolute;
-      top: 100%;
-      left: 5px;
-      margin: 0;
-      padding:0;
-      list-style-type: none;
-      border: 1px solid var(--figma-color-border);
-      background-color: var(--figma-color-bg);
-      border-radius: var(--border-radius, 3px);
-      margin-top: calc($gap/3)+0px;
-      overflow: hidden;
-      transform: translateY(-100%);
-      visibility: hidden;
-      opacity: 0;
-      transition: $near $curve all;
-      &.opened {
-        transform: translateY(0%);
-        opacity: 1;
-        visibility: visible;
+    &--container {
+      position: relative;
+      width: 100%;
+      height: $searchbar + 0px;
+      font-family: var(--font-family);
+      font-weight: 900;
+
+      input {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        font-family: inherit;
+        font-weight: 400;
+        border: 1px solid rgba(#eee, 0);
+        color: currentColor;
+        background: none;
+        border-radius: var(--border-radius, 3px);
+        padding: 0;
+        z-index: 1;
+        &:focus {
+          outline: none;
+        }
       }
-      li {
-        padding: calc($gap/2) + 0px $gap + 0px;
+      .icon {
+        width: 30px;
+        height: 30px;
+      }
+
+      i {
+        cursor: pointer;
+
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: $searchbar + 0px;
+        height: $searchbar + 0px;
+        color: currentColor;
+        opacity: 0.54;
+        user-select: none;
+        z-index: 1;
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .id-text {
+      position: absolute;
+      left: 0;
+      bottom: 5px;
+      padding-left: ($searchbar + ($gap * 2))+0px;
+      display: block;
+      text-align: right;
+      margin: 0;
+      z-index: 1;
+      opacity: 0.54;
+    }
+  }
+  .icon-actions {
+    position: relative;
+    display: flex;
+    width: 100%;
+    padding: 0px $gap + 0px;
+    font-size: 12px;
+    color: var(--figma-color-text);
+    background-color: var(--figma-color-bg);
+    border-bottom: 1px solid var(--figma-color-border);
+    min-height: 40px;
+    z-index: 2;
+
+    &__view,
+    &__sort {
+      display: flex;
+      align-items: center;
+      font-size: inherit;
+      padding-right: #{$gap}px;
+      margin-right: #{$gap}px;
+      border-right: 1px solid var(--figma-color-border);
+      .select-menu__button {
+        font-size: inherit;
+        margin-left: .5rem;
+        color: var(--accent);
+      }
+    }
+    &__select {
+      cursor: default;
+      user-select: none;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding-left: .5rem;
+
+      b {
+        display: flex;
+        align-items: center;  
+        color: var(--accent);
+        padding: calc($gap/2) + 0px calc($gap/3) + 0px;
+        font-weight: normal;
+        border-radius: var(--border-radius, 3px);
+        &:hover {
+          background-color: var(--figma-color-bg-secondary);
+        }
+        svg {
+          position: relative;
+          opacity: 1;
+          display: inline-block;
+          color: currentColor;
+        }
+      }
+      .select-options {
+        position: absolute;
+        top: 100%;
+        left: 5px;
+        margin: 0;
+        padding:0;
+        list-style-type: none;
+        border: 1px solid var(--figma-color-border);
+        background-color: var(--figma-color-bg);
+        border-radius: var(--border-radius, 3px);
+        margin-top: calc($gap/3)+0px;
+        overflow: hidden;
+        transform: translateY(-100%);
+        visibility: hidden;
+        opacity: 0;
+        transition: $near $curve all;
+        &.opened {
+          transform: translateY(0%);
+          opacity: 1;
+          visibility: visible;
+        }
+        li {
+          padding: calc($gap/2) + 0px $gap + 0px;
+          &:hover {
+            background-color: var(--figma-color-bg-secondary);
+          }
+        }
+      }
+    }
+    &__ver {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left:auto;
+      font-size: 10px;
+      align-self: center;
+      .icon {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .grid-wrap {
+    position: relative;
+    padding: $gap + 0px;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    &:not(.favourites-grid) {
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: 100%;
+      transition: $near $curve max-height;
+      @include custom-scrollbar();
+    }
+    &.favourites-grid {
+      display: flex;
+      min-height: 70px;
+      background-color: var(--figma-color-bg-tertiary);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-gutter: revert;
+      @include custom-scrollbar($d: 'v', $s: 0);
+
+      &:before{
+        content: '';
+        position: sticky;
+        top: 0;
+        bottom: 0;
+        display: block;
+        width: $gap + 0px;
+        flex-shrink: 0;
+        z-index: 2;
+      }
+      &:before {
+        left: -#{$gap}px;
+        margin-left: -#{$gap}px;
+        background-image: linear-gradient(to right, var(--figma-color-bg-tertiary), rgba(#000,0));
+      }
+      
+      .icon-grid {
+        --grid-min-width: 50px;
+        grid-template-columns: repeat(auto-fill, var(--grid-min-width));
+        grid-template-rows: var(--grid-min-width);
+        grid-auto-flow: column;
+        &--item {
+          scroll-snap-align: start;
+          border-radius: 1e3px;
+          padding: 0;
+          h3, p {
+            display: none;
+          }
+        }
+        &:after {
+          content:'';
+          width: 1px;
+        }
+      }
+      > p {
+        font-size: 12px;
+        text-align: center;
+        padding: 0px;
+        margin: auto;
+        font-weight: 600;
+        + .icon-grid {
+          display: none;
+        }
+      }
+    }
+    &:has(.grid-wrap + .notification-toast) {
+      padding-bottom: 80px;
+    }
+  }
+
+  .icon-grid {
+    --grid-min-width: 90px;
+
+    position: relative;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
+    grid-auto-rows: min-content;
+    gap: $gap + 0px;
+    grid-auto-flow: dense;
+
+    &--item {
+      cursor: pointer;
+      &:not(.btn) {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: var(--grid-min-width);
+        padding: 1rem;
+        border-radius: var(--border-radius, 3px);
+        text-align: center;
+        overflow: hidden;
+        outline-offset: calc($gap/2 - ($border-width/2))+0px;
+        user-select: none;
+      }
+      > * {
+        margin-top: 0;
+      }
+      &.load-more {
+        position: sticky;
+        bottom: 0;
+        grid-column: 1 / -1;
+        margin: 0;
+        color: inherit;
+        background: inherit;
+        border-color: inherit;
+        background-color: var(--figma-color-bg);
+        border: 1px solid currentColor;
+        user-select: none;
+        &:focus,
         &:hover {
           background-color: var(--figma-color-bg-secondary);
         }
       }
-    }
-  }
-  &__ver {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left:auto;
-    font-size: 10px;
-    align-self: center;
-    .icon {
-      font-size: 14px;
-    }
-  }
-}
-
-.grid-wrap {
-  position: relative;
-  padding: $gap + 0px;
-  scroll-behavior: smooth;
-  scrollbar-gutter: stable;
-  &:not(.favourites-grid) {
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-height: 100%;
-    transition: $near $curve max-height;
-    @include custom-scrollbar();
-  }
-  &.favourites-grid {
-    display: flex;
-    min-height: 70px;
-    background-color: var(--figma-color-bg-tertiary);
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-gutter: revert;
-    @include custom-scrollbar($d: 'v', $s: 0);
-
-    &:before{
-      content: '';
-      position: sticky;
-      top: 0;
-      bottom: 0;
-      display: block;
-      width: $gap + 0px;
-      flex-shrink: 0;
-      z-index: 2;
-    }
-    &:before {
-      left: -#{$gap}px;
-      margin-left: -#{$gap}px;
-      background-image: linear-gradient(to right, var(--figma-color-bg-tertiary), rgba(#000,0));
-    }
-    
-    .icon-grid {
-      --grid-min-width: 50px;
-      grid-template-columns: repeat(auto-fill, var(--grid-min-width));
-      grid-template-rows: var(--grid-min-width);
-      grid-auto-flow: column;
-      &--item {
-        scroll-snap-align: start;
-        border-radius: 1e3px;
-        padding: 0;
-        h3, p {
-          display: none;
-        }
-      }
-      &:after {
-        content:'';
-        width: 1px;
-      }
-    }
-    > p {
-      font-size: 12px;
-      text-align: center;
-      padding: 0px;
-      margin: auto;
-      font-weight: 600;
-      + .icon-grid {
-        display: none;
-      }
-    }
-  }
-  &:has(.grid-wrap + .notification-toast) {
-    padding-bottom: 80px;
-  }
-}
-
-.icon-grid {
-  --grid-min-width: 90px;
-
-  position: relative;
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
-  grid-auto-rows: min-content;
-  gap: $gap + 0px;
-  grid-auto-flow: dense;
-
-  &--item {
-    cursor: pointer;
-    &:not(.btn) {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: var(--grid-min-width);
-      padding: 1rem;
-      border-radius: var(--border-radius, 3px);
-      text-align: center;
-      overflow: hidden;
-      outline-offset: calc($gap/2 - ($border-width/2))+0px;
-      user-select: none;
-    }
-    > * {
-      margin-top: 0;
-    }
-    &.load-more {
-      position: sticky;
-      bottom: 0;
-      grid-column: 1 / -1;
-      margin: 0;
-      color: inherit;
-      background: inherit;
-      border-color: inherit;
-      background-color: var(--figma-color-bg);
-      border: 1px solid currentColor;
-      user-select: none;
-      &:focus,
-      &:hover {
-        background-color: var(--figma-color-bg-secondary);
-      }
-    }
-    &.selected {
-      box-shadow: inset 0 0 0 2px var(--accent),
-                  inset 0 0 0 4px var(--figma-color-bg);
-    }
-    span {
-      display: inline-block;
-      width: 100%;
-      img {
-        width: 30px;
-      }
-    }
-    h3 {
-      font-size: 10px;
-      opacity: .5;
-      font-weight: 400;
-    }
-    p {
-      font-size: 12px;
-      margin-bottom: 0;
-    }
-    .favourite-badge {
-      position: absolute;
-      top: 0;
-      right: 0;
-      border-radius: var(--border-radius, 3px);
-    }
-  }
-
-  &.list-view {
-    --grid-min-width: 62px;
-    grid-template-columns: 1fr;
-    .icon-grid--item {
-      &:not(.btn) {
-        display: grid;
-        grid-template-columns: var(--grid-min-width) 1fr;
-        grid-template-rows: 1fr 1fr;
-        text-align: left;
-        padding: 0;
-      }
-      h3, p, span {
-        padding: 1rem;
+      &.selected {
+        box-shadow: inset 0 0 0 2px var(--accent),
+                    inset 0 0 0 4px var(--figma-color-bg);
       }
       span {
-        display: flex;
-        align-items: center;
-        grid-column: 1;
-        grid-row: 1 / 3;
+        display: inline-block;
+        width: 100%;
+        img {
+          width: 30px;
+        }
       }
       h3 {
-        margin: 0;
-        padding-bottom: 0;
+        font-size: 10px;
+        opacity: .5;
+        font-weight: 400;
       }
       p {
-        padding-top: 0;
+        font-size: 12px;
+        margin-bottom: 0;
+      }
+      .favourite-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        border-radius: var(--border-radius, 3px);
+      }
+    }
+
+    &.list-view {
+      --grid-min-width: 62px;
+      grid-template-columns: 1fr;
+      .icon-grid--item {
+        &:not(.btn) {
+          display: grid;
+          grid-template-columns: var(--grid-min-width) 1fr;
+          grid-template-rows: 1fr 1fr;
+          text-align: left;
+          padding: 0;
+        }
+        h3, p, span {
+          padding: 1rem;
+        }
+        span {
+          display: flex;
+          align-items: center;
+          grid-column: 1;
+          grid-row: 1 / 3;
+        }
+        h3 {
+          margin: 0;
+          padding-bottom: 0;
+        }
+        p {
+          padding-top: 0;
+        }
       }
     }
   }
-}
 
-.notification-toast {
-  // position: fixed;
-  position: relative;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  border-top: 1px solid var(--figma-color-border);
-  margin-top: auto;
-  z-index: 1;
-  &.selection {
+  .notification-toast {
+    // position: fixed;
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--figma-color-border);
+    margin-top: auto;
+    z-index: 1;
+    &.selection {
+      .bubble {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        &-icon {
+          width: auto;
+          height: 55px;
+        }
+        &-actions {
+          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+        }
+      }
+    }
+    &.copied {
+      .bubble {
+        border: 5px solid var(--accent-hover);
+      }
+    }
     .bubble {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      &-icon {
-        width: auto;
-        height: 55px;
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+      text-align: center;
+      padding: calc($gap/2)+0px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      @supports (backdrop-filter: blur(10px)) {
+        backdrop-filter: saturate(180%) blur(10px);
+      }
+      p {
+        margin: 0;
       }
       &-actions {
-        width: 100%;
-        display: flex;
-        flex-wrap: wrap;
-      }
-    }
-  }
-  &.copied {
-    .bubble {
-      border: 5px solid var(--accent-hover);
-    }
-  }
-  .bubble {
-    background-color: var(--figma-color-bg);
-    color: var(--figma-color-text);
-    text-align: center;
-    padding: calc($gap/2)+0px;
-    font-size: 1.5rem;
-    font-weight: 900;
-    @supports (backdrop-filter: blur(10px)) {
-      backdrop-filter: saturate(180%) blur(10px);
-    }
-    p {
-      margin: 0;
-    }
-    &-actions {
-      button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex: 1 1 40%;
-        min-width: unset;
-        margin: calc($gap/2)+0px;
-        &.button--primary {
-          width: 100%;
-        }
-        svg {
-          margin-right: .2rem;
+        button {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex: 1 1 40%;
+          min-width: unset;
+          margin: calc($gap/2)+0px;
+          &.button--primary {
+            width: 100%;
+          }
+          svg {
+            margin-right: .2rem;
+          }
         }
       }
     }
   }
-}
-
 </style>

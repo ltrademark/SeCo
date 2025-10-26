@@ -1,4 +1,7 @@
-@import 'parts/config';
+@use "sass:color";
+// Bring config forwards into the local scope so variables/mixins/functions
+// can be used without a namespace in this global stylesheet.
+@use 'parts/config' as *;
 
 :root {
   --theme: 'light';
@@ -19,7 +22,7 @@ body {
 
 a {
 	text-decoration: none;
-	color: darken($accent, 10%);
+	color: color.adjust($accent, $lightness: -10%);
 	font-weight: 700;
   &:hover,
   &:focus {
@@ -64,7 +67,7 @@ code {
     background-color: $accent;
     &:focus,
     &:hover {
-      background-color: darken($accent, 15%);
+      background-color: color.adjust($accent, $lightness: -15%);
     }
   }
   &-secondary {
@@ -73,9 +76,9 @@ code {
     border: 4px solid $accent;
     &:focus,
     &:hover {
-      background-color: darken(setcolor($selectedTheme, bg), 10%);
-      border-color: darken($accent, 15%);
-      color: darken($accent, 15%);
+      background-color: color.adjust(setcolor($selectedTheme, bg), $lightness: -10%);
+      border-color: color.adjust($accent, $lightness: -15%);
+      color: color.adjust($accent, $lightness: -15%);
     }
   }
   &-default {
@@ -232,7 +235,7 @@ code {
     &.active {
       border: $border-width+0px solid $accent;
       color: setcolor($selectedTheme, fg);
-      background-color: darken(setcolor($selectedTheme, bg), 10%);
+      background-color: color.adjust(setcolor($selectedTheme, bg), $lightness: -10%);
     }
     @include respond-to('mobile') {
       &.hide-on-mobile {
@@ -405,7 +408,7 @@ code {
 	}
 	&.copied {
 		.bubble {
-			border: 5px solid darken($accent, 10%);
+			border: 5px solid color.adjust($accent, $lightness: -10%);
 		}
 	}
 	.bubble {
@@ -454,7 +457,7 @@ code {
   button {
     &.active {
       color: setcolor('dark', fg);
-      background-color: darken(setcolor('dark', bg), 10%);
+      background-color: color.adjust(setcolor('dark', bg), $lightness: -10%);
     }
   }
   input {
