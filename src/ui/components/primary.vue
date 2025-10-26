@@ -62,12 +62,12 @@
         <p v-if="favouritedIcons.length < 1">Add some icons to your Favourites</p>
         <div class="icon-grid">
           <div class="icon-grid--item"
-            :class="{selected: (filterByColour ? idx : icon.icons_index) === selectedIcon}"
-            v-for="(icon, idx) in favouritedIcons"
+            :class="{selected: icon.icons_id === selectedIcon}"
+            v-for="icon in favouritedIcons"
             :style="'background-color: #' + icon.hex"
-            :key="icon.icons_index + '-fav'"
-            :data-iconindex="icon.icons_index + '-fav'"
-            @click="selectIcon(icon.title, icon.icons_index)">
+            :key="icon.icons_id + '-fav'"
+            :data-iconindex="icon.icons_id + '-fav'"
+            @click="selectIcon(icon.title, icon.icons_id)">
             <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
               <img :src="icon.title | svgname" :alt="icon.title" />
             </span>
@@ -80,21 +80,21 @@
     <div class="grid-wrap" v-show="loaded">
       <div class="icon-grid" :class="{'list-view' : viewAsList}">
         <div class="icon-grid--item"
-          :class="{selected: (filterByColour ? idx : icon.icons_index) === selectedIcon}"
-          v-for="(icon, idx) in filteredIcons.slice(0, itemsLoaded)"
+          :class="{selected: icon.icons_id === selectedIcon}"
+          v-for="icon in filteredIcons.slice(0, itemsLoaded)"
           :title="icon.title"
           :style="'background-color: #' + icon.hex"
-          :key="icon.icons_index"
-          :data-iconindex="icon.icons_index"
-          @click="filterByColour ? selectIcon(icon.title, idx) : selectIcon(icon.title, icon.icons_index)">
+          :key="icon.icons_id"
+          :data-iconindex="icon.icons_id"
+          @click="selectIcon(icon.title, icon.icons_id)">
           <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
             <img :src="icon.title | svgname" :alt="icon.title" />
           </span>
           <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
           <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
-          <i class="favourite-badge icon icon--star-on" 
-             :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"
-             v-if="favouritedIcons.some((obj) => obj.title === icon.title)"></i>
+       <i class="favourite-badge icon icon--star-on" 
+         :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"
+         v-if="favouritedIcons.some((obj) => obj.icons_id === icon.icons_id)"></i>
         </div>
         <transition name="fade">
           <div class="icon-grid--item load-more btn btn--secondary"
@@ -310,12 +310,12 @@ export default {
     getSimple() {
       axios.get(this.SimpleIconsSource + '/_data/simple-icons.json').then((res) => {
         this.icons = res.data || res.data.icons;
-        // Assigns an initial index and hue to the recieved array for more accurate sorting and searching
         for (let i = 0; i < this.icons.length; i++) {
-          this.icons[i].icons_index = i;
-          this.icons[i].hsl = this.getHSL(this.icons[i].hex);
-          this.icons[i].rgb = this.getRGB(this.icons[i].hex);
-          // this.icons[i].icon_name = this.$options.filters.svgname(this.icons[i].title);
+          const icon = this.icons[i];
+          icon.icons_id = this.generateIconId(icon); // stable ID
+          icon.icons_index = i; // optional, for display only
+          icon.hsl = this.getHSL(icon.hex);
+          icon.rgb = this.getRGB(icon.hex);
         }
         this.loaded = true;
       }, (error) => {
@@ -460,8 +460,8 @@ export default {
       this.whatsNewModalOpen=!this.whatsNewModalOpen;
     },
     handleIcons(idx) {
-      let arr = this.icons || this.favouritedIcons;
-      return arr[idx];
+      // Find by icons_id instead of index for stability
+      return this.icons.find(icon => icon.icons_id === idx) || this.favouritedIcons.find(icon => icon.icons_id === idx);
     },
     updateFavourites() {
       let favourites = this.favouritedIcons;
@@ -500,6 +500,10 @@ export default {
     commify(num) {
       if (isNaN(num)) return num;
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    },
+    generateIconId(icon) {
+      // Use title and hex, which should be unique for each icon
+      return `${icon.title.replace(/\s+/g, '_').toLowerCase()}_${icon.hex}`;
     }
   },
   mounted() {
@@ -580,11 +584,14 @@ export default {
         favouriteToggle() {
           if (this.faved) {
             this.faved = false;
-            this.$parent.favouritedIcons.splice(this.$parent.favouritedIcons.findIndex(e => e.icons_index === this.identity.icons_index),1);
+            this.$parent.favouritedIcons.splice(
+              this.$parent.favouritedIcons.findIndex(e => e.icons_id === this.identity.icons_id),
+              1
+            );
             this.$parent.updateFavourites();
           } else {
             this.faved = true;
-            this.$parent.favouritedIcons.push(this.identity)
+            this.$parent.favouritedIcons.push(this.identity);
             this.$parent.updateFavourites();
           }
         }
@@ -633,16 +640,13 @@ export default {
     },
     whatsNew
   },
-};
+}
 </script>
 
 <style lang="scss">
   @use "sass:color";
   @use 'sass:math';
   @use "../sass/parts/config" as *;
-  // @use "../sass/parts/variables" as *;
-  // @use "../sass/parts/mixins" as *;
-  // @use "../sass/parts/functions" as *;
 
   :root {
     --theme: 'light';

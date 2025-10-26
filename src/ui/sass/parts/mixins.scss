@@ -54,7 +54,8 @@
 @mixin buttonDefault() {
   display: flex;
   justify-content: center;
-  gap: .5rem;
+  align-items: center;
+  gap: $gap + 0px;
   min-width: 150px;
   font-size: 11px;
   font-weight: 500;

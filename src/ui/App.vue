@@ -27,5 +27,5 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../figma/figma-ds/figma-plugin-ds";
+@use "../figma/figma-ds/figma-plugin-ds";
 </style>
