@@ -10,7 +10,8 @@
                class="input__field"
                placeholder="What Brand Are You Looking For?"
                v-model="isearch"
-               @blur="confirmSearch"/>
+               @blur="confirmSearch"
+               @input="onSearchInput"/>
         <b @click="clearQuery" v-if="isearch !== ''"><close-icon class="icon"></close-icon></b>
       </div>
       <button class="btn btn-square show-on-mobile"
@@ -52,10 +53,7 @@
       </div>
     </div>
     <div class="loader" v-if="!loaded">
-      <img
-        src="https://cdn.glitch.com/94a91acb-521d-41e5-be37-e8843474659f%2Floading.9f5a9a60.gif"
-        alt="loading icon"
-      />
+      <loading-spinner />
     </div>
     <transition name="popin" mode="out-in">
       <div class="grid-wrap favourites-grid" v-if="showFavourites">
@@ -69,7 +67,7 @@
             :data-iconindex="icon.icons_id + '-fav'"
             @click="selectIcon(icon.title, icon.icons_id)">
             <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
-              <img :src="icon.title | svgname" :alt="icon.title" />
+              <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" />
             </span>
             <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
             <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
@@ -78,43 +76,40 @@
       </div>
     </transition>
     <div class="grid-wrap" v-show="loaded">
-      <div class="icon-grid" :class="{'list-view' : viewAsList}">
-        <div class="icon-grid--item"
+      <div class="icon-grid" :class="{'list-view': viewAsList}">
+        <div
+          class="icon-grid--item"
+          v-for="icon in filteredIcons"
+          :key="`${icon.icons_id}`"
           :class="{selected: icon.icons_id === selectedIcon}"
-          v-for="icon in filteredIcons.slice(0, itemsLoaded)"
           :title="icon.title"
           :style="'background-color: #' + icon.hex"
-          :key="icon.icons_id"
           :data-iconindex="icon.icons_id"
-          @click="selectIcon(icon.title, icon.icons_id)">
+          @click="selectIcon(icon.title, icon.icons_id)"
+        >
           <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
-            <img :src="icon.title | svgname" :alt="icon.title" />
+            <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" />
           </span>
           <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
           <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
-       <i class="favourite-badge icon icon--star-on" 
-         :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"
-         v-if="favouritedIcons.some((obj) => obj.icons_id === icon.icons_id)"></i>
+          <i
+            class="favourite-badge icon icon--star-on"
+            :class="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'icon--white' : ''"
+            v-if="favouriteIdSet.has(icon.icons_id)"
+          ></i>
         </div>
-        <transition name="fade">
-          <div class="icon-grid--item load-more btn btn--secondary"
-              @click="loadMore"
-              v-if="itemsLoaded < icons.length && isearch === ''">
-              Load {{ specialTrigger ? `Everything (${formattedIconCount})` : `${loadInc} More` }}
-          </div>
-        </transition>
       </div>
     </div>
     <transition name="popup" mode="out-in">
       <selection-banner
-        :llave="handleIcons(selectedIcon).title"
+        :llave="selectedIconData.title"
         :selected="selectedIcon"
         v-if="selectedIcon !== null"
-        :identity="handleIcons(selectedIcon)"
-        :color-target="handleIcons(selectedIcon).hex"
-        :rgb-target="handleIcons(selectedIcon).rgb"
-        :icon-target="handleIcons(selectedIcon).title | svgname"
-        :icon-name="handleIcons(selectedIcon).title | svgname | sanitizeURL"
+        :identity="selectedIconData"
+        :color-target="selectedIconData.hex"
+        :rgb-target="selectedIconData.rgb"
+        :icon-target="selectedIconData.svgUrl"
+        :icon-name="iconFilename(selectedIconData.svgUrl)"
       >
       </selection-banner>
     </transition>
@@ -126,39 +121,36 @@
 
 <script>
 import whatsNew from './whatsNew';
-import axios from 'axios';
+import LoadingSpinner from './loading-spinner.vue';
 
-const SimpleIconsSource = 'https://cdn.jsdelivr.net/npm/simple-icons';
+const SIMPLE_ICONS_SOURCE = 'https://cdn.jsdelivr.net/npm/simple-icons';
 
 export default {
   data() {
     return {
-      version: '4.2',
+      version: '4.3',
       loaded: false,
       icons: [],
       favouritedIcons: [],
       selectedIcon: null,
-      itemsLoaded: 15,
-      loadInc: 15,
       isearch: '',
+      debouncedSearch: '',
+      searchDebounceTimer: null,
       viewAsList: false,
-      viewAsGrid: true,
-      specialTrigger: false,
       filterByColour: false,
       sortOpen: false,
       viewOpen: false,
       showFavourites: false,
-      showMobileSorts: false,
       whatsNewModalOpen: false,
-      darkMode: false,
-      SimpleIconsSource: 'https://cdn.jsdelivr.net/npm/simple-icons'
     };
   },
   filters: {
     contrast(hex) {
-      let threshold = 130;
-      let contrastcolor;
+      const threshold = 130;
 
+      function cutHex(h) {
+        return h.charAt(0) === '#' ? h.substring(1, 7) : h;
+      }
       function hexToR(h) {
         return parseInt(cutHex(h).substring(0, 2), 16);
       }
@@ -168,168 +160,78 @@ export default {
       function hexToB(h) {
         return parseInt(cutHex(h).substring(4, 6), 16);
       }
-      function cutHex(h) {
-        return h.charAt(0) == '#' ? h.substring(1, 7) : h;
-      }
 
-      let hRed = hexToR(hex);
-      let hGreen = hexToG(hex);
-      let hBlue = hexToB(hex);
+      const hRed = hexToR(hex);
+      const hGreen = hexToG(hex);
+      const hBlue = hexToB(hex);
+      const cBrightness = (hRed * 299 + hGreen * 587 + hBlue * 114) / 1000;
 
-      let cBrightness = (hRed * 299 + hGreen * 587 + hBlue * 114) / 1000;
-
-      if (cBrightness > threshold) {
-        contrastcolor = '#000000';
-      } else {
-        contrastcolor = '#ffffff';
-      }
-
-      return 'color: ' + contrastcolor.toString();
+      return 'color: ' + (cBrightness > threshold ? '#000000' : '#ffffff');
     },
-    svgname(icon) {
-      let url = SimpleIconsSource + '/icons/';
-      let label = icon.toLowerCase();
-
-      // VERY specific edge cases
-      if (icon.includes('Amazon Identity Access Management')) {
-        label = label.replace(' identity access management', 'iam');
-      }
-      if (icon.includes('OWASP Dependency-Check')) {
-        label = label.replace('owasp dependency-check', 'dependencycheck');
-      }
-      if (icon.includes('Tata Consultancy Services')) {
-        label = label.replace('tata consultancy services', 'tcs');
-      }
-      if (icon.includes('Sphere Online Judge')) {
-        label = label.replace('sphere online judge', 'spoj');
-      }
-      if (icon.includes('1.1.1.1')) {
-        label = label.replace('1.1.1.1', '1dot1dot1dot1');
-      }
-      if (icon.includes('Sat.1')) {
-        label = label.replace('.1', '1');
-      }
-
-      // General cases
-      if (icon.includes(' ')) {
-        label = label.replaceAll(/\s/g, '');
-      }
-      if (icon.includes('’')) {
-        label = label.replaceAll(/\’/g, '');
-      }
-      if (icon.includes("'")) {
-        label = label.replaceAll(/\'/g, '');
-      }
-      if (icon.includes('&')) {
-        label = label.replaceAll('&', 'and');
-      }
-      if (icon.includes('#')) {
-        label = label.replaceAll('#', 'sharp');
-      }
-      if (icon.includes('-')) {
-        label = label.replaceAll('-', '');
-      }
-      if (icon.includes('_')) {
-        label = label.replaceAll('_', '');
-      }
-      if (icon.includes(':')) {
-        label = label.replaceAll(/\:/g, '');
-      }
-      if (icon.includes('+')) {
-        label = label.replaceAll(/[+]/g, 'plus');
-      }
-      if (icon.includes('!')) {
-        label = label.replaceAll(/\!/g, '');
-      }
-      if (icon.includes('/')) {
-        label = label.replaceAll(/\//g, '');
-      }
-      if (icon.includes('°')) {
-        label = label.replace('°', '');
-      }
-      if (label.includes('.')) {
-        if ((label.match(/[.]/g) || []).length > 1) {
-          label = label.replace(/\./g, ''); // multiple periods
-        } else if (label.endsWith('.')) {
-          label = label.replace('.', ''); // period at the end
-        } else {
-          label = label.replaceAll(/\./g, 'dot'); // single period
-        }
-      };
-      
-      let cleanLabel = label.normalize('NFD').replace(/\p{Diacritic}/gu, "");
-      return url + cleanLabel + '.svg';
-    },
-    sanitizeURL(url) {
-      return url.slice(url.lastIndexOf('/') + 1, url.length);
-    }
   },
   computed: {
+    selectedIconData() {
+      if (this.selectedIcon === null) return {};
+      return this.handleIcons(this.selectedIcon) || {};
+    },
     filteredIcons() {
-      let searchTerm = this.isearch;
+      const searchTerm = this.debouncedSearch;
 
       return this.icons.filter((icon) => {
-        let parts = searchTerm.trim().split(' ');
+        const parts = searchTerm.trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return true;
 
-        for (let part of parts) {
-          let searchRegex = new RegExp(part, 'i');
-
-          if (!(searchRegex.test(icon.title) || searchRegex.test(icon.hex))) {
+        for (const part of parts) {
+          const needle = part.toLowerCase();
+          if (
+            !icon.title.toLowerCase().includes(needle) &&
+            !icon.hex.toLowerCase().includes(needle)
+          ) {
             return false;
           }
         }
-
         return true;
       });
     },
-    favoriteIcons() {
-      return this.icons.filter((icon) => {
-        if(this.selectedIcon === null) {
-          return false;
-        } else {
-          if(!icon.fav) {
-            return false;
-          }
-          return true;
-        }
-      });
+    favouriteIdSet() {
+      return new Set(this.favouritedIcons.map((icon) => icon.icons_id));
     },
-    loadButtonStyle() {
-      let style = '';
-      let loadHeight = 30,
-          gap = 10,
-          padding = loadHeight + gap;
-
-      return 'padding-bottom: ' + padding + 'px';
-    },
-    formattedIconCount() {
-      return this.commify(this.filteredIcons.length);
-    }
   },
   methods: {
-    getSimple() {
-      axios.get(this.SimpleIconsSource + '/_data/simple-icons.json').then((res) => {
-        this.icons = res.data || res.data.icons;
+    async getSimple() {
+      try {
+        const res = await fetch(SIMPLE_ICONS_SOURCE + '/data/simple-icons.json');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        this.icons = Array.isArray(data) ? data : data.icons;
+
         for (let i = 0; i < this.icons.length; i++) {
           const icon = this.icons[i];
-          icon.icons_id = this.generateIconId(icon); // stable ID
-          icon.icons_index = i; // optional, for display only
+          icon.icons_id = this.generateIconId(icon);
+          icon.icons_index = i;
           icon.hsl = this.getHSL(icon.hex);
           icon.rgb = this.getRGB(icon.hex);
+          icon.svgUrl = SIMPLE_ICONS_SOURCE + '/icons/' + icon.slug + '.svg';
         }
+        this.hydrateFavourites();
         this.loaded = true;
-      }, (error) => {
-        console.log(error);
-      });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    onSearchInput() {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = setTimeout(() => {
+        this.debouncedSearch = this.isearch;
+      }, 250);
+    },
+    iconFilename(url) {
+      return url ? url.slice(url.lastIndexOf('/') + 1) : '';
     },
     sortByColour() {
-      // Trying to sort my icon array by colour, by converting the hex value,
-      // apllying the HSL value from the hex and then splitting those values
-      // to make a "descending" order of colour. The issue is that the
-      // numbers being generated by ".sort()"
       this.icons.sort((a, b) => {
-        let aHSL = a.hsl.split(','),
-          bHSL = b.hsl.split(',');
+        const aHSL = a.hsl.split(',');
+        const bHSL = b.hsl.split(',');
 
         return (
           parseInt(aHSL[0] - bHSL[0]) -
@@ -342,17 +244,14 @@ export default {
       this.sortOpen = false;
     },
     sortByName() {
-      this.icons.sort((a, b) => {
-        return a.icons_index - b.icons_index;
-      });
+      this.icons.sort((a, b) => a.icons_index - b.icons_index);
       this.filterByColour = false;
       this.selectedIcon = null;
       this.sortOpen = false;
     },
     selectIcon(name, idx) {
-      let iconIsSame = this.selectedIcon === idx;
-      let noIcon = this.selectedIcon === null;
-      let parsedName = encodeURIComponent(name.trim().toLowerCase());
+      const iconIsSame = this.selectedIcon === idx;
+      const noIcon = this.selectedIcon === null;
 
       if (iconIsSame && !noIcon) {
         this.selectedIcon = null;
@@ -363,44 +262,29 @@ export default {
         }, 100);
       }
     },
-    loadMore() {
-      let loadInt = Math.floor(document.getElementsByClassName('icon-grid')[0].clientWidth / document.getElementsByClassName('icon-grid--item')[0].clientWidth) * 2;
-      // this should *technically* be loading 6 items at a time.
-      if (this.specialTrigger) {
-        this.itemsLoaded = this.icons.length;
-      } else {
-        if (this.itemsLoaded < this.icons.length)
-          this.itemsLoaded = this.itemsLoaded + this.loadInc;
-      }
-      return;
-    },
     confirmSearch() {
-      let url = window.location.href,
-        typedSomething = this.isearch !== '',
-        searchQueryExists = window.location.search !== '',
-        query = window.location.href.substring(
-          window.location.href.indexOf('=') + 1
-        );
       return;
     },
     getHSL(hex) {
-      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex),
-        r = parseInt(result[1], 16),
-        g = parseInt(result[2], 16),
-        b = parseInt(result[3], 16);
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      let r = parseInt(result[1], 16);
+      let g = parseInt(result[2], 16);
+      let b = parseInt(result[3], 16);
 
-      (r /= 255), (g /= 255), (b /= 255);
+      r /= 255;
+      g /= 255;
+      b /= 255;
 
-      let max = Math.max(r, g, b),
-        min = Math.min(r, g, b);
-      let h,
-        s,
-        l = (max + min) / 2;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h;
+      let s;
+      let l = (max + min) / 2;
 
-      if (max == min) {
-        h = s = 0; // achromatic
+      if (max === min) {
+        h = s = 0;
       } else {
-        let d = max - min;
+        const d = max - min;
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch (max) {
           case r:
@@ -416,117 +300,98 @@ export default {
         h /= 6;
       }
 
-      s = s * 100;
-      s = Math.round(s);
-      l = l * 100;
-      l = Math.round(l);
+      s = Math.round(s * 100);
+      l = Math.round(l * 100);
       h = Math.round(360 * h);
 
       return h + ',' + s + ',' + l;
     },
     getRGB(hex) {
-      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    },
-    enableDarkMode() {
-      this.darkMode = !this.darkMode;
-      this.meta_theme();
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : null;
     },
     clearQuery() {
       this.isearch = '';
+      this.debouncedSearch = '';
       this.selectedIcon = null;
     },
-    favToggle() {
-      this.showFavourites = !this.showFavourites;
-    },
     toggleViewDropdown(tar) {
-      switch(tar) {
+      switch (tar) {
         case 1:
-          this.viewAsList = false
+          this.viewAsList = false;
           break;
         case 2:
-          this.viewAsList = true
+          this.viewAsList = true;
           break;
         default:
           break;
       }
-      this.viewOpen = false
+      this.viewOpen = false;
     },
-    toggleWhatsNew(){
-      this.whatsNewModalOpen=!this.whatsNewModalOpen;
+    toggleWhatsNew() {
+      this.whatsNewModalOpen = !this.whatsNewModalOpen;
     },
     handleIcons(idx) {
-      // Find by icons_id instead of index for stability
-      return this.icons.find(icon => icon.icons_id === idx) || this.favouritedIcons.find(icon => icon.icons_id === idx);
+      return (
+        this.icons.find((icon) => icon.icons_id === idx) ||
+        this.favouritedIcons.find((icon) => icon.icons_id === idx)
+      );
     },
     updateFavourites() {
       let favourites = this.favouritedIcons;
-      if ((this.favouritedIcons.length > 0) && this.loaded) {
-        parent.postMessage(
-          { pluginMessage: { type: "update-faves", favourites } },
-          "*"
-        );
-      } else if((this.favouritedIcons.length === 0) && this.loaded) {
+      if (this.favouritedIcons.length > 0 && this.loaded) {
+        parent.postMessage({ pluginMessage: { type: 'update-faves', favourites } }, '*');
+      } else if (this.favouritedIcons.length === 0 && this.loaded) {
         favourites = [];
-        parent.postMessage(
-          { pluginMessage: { type: "update-faves", favourites } },
-          "*"
-        );
+        parent.postMessage({ pluginMessage: { type: 'update-faves', favourites } }, '*');
       } else {
-        parent.postMessage(
-          { pluginMessage: { type: "get-faves" } },
-          "*"
-        );
+        parent.postMessage({ pluginMessage: { type: 'get-faves' } }, '*');
       }
-    },
-    extraCharCheck(name) {
-      let hasSpace = name.indexOf(' ') > -1,
-          hasSmartquote = name.indexOf('’') > -1,
-          hasNormalquote = name.includes("'"),
-          hasAmp = name.includes('&'),
-          hasHyphen = name.includes('-'),
-          hasColon = name.includes(':'),
-          hasPlus = name.includes('+'),
-          hasExcl = name.includes('!'),
-          hasFSlash = name.includes('/'),
-          hasPeriod = name.includes('.');
-          let labelIsDirty = hasSpace || hasSmartquote || hasNormalquote || hasAmp || hasHyphen || hasColon || hasPlus || hasExcl || hasFSlash || hasPeriod;
-      return labelIsDirty;
     },
     commify(num) {
       if (isNaN(num)) return num;
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
     generateIconId(icon) {
-      // Use title and hex, which should be unique for each icon
-      return `${icon.title.replace(/\s+/g, '_').toLowerCase()}_${icon.hex}`;
-    }
+      return icon.slug.replace(/\s+/g, '_').toLowerCase() + '_' + icon.hex;
+    },
+    hydrateFavourites() {
+      if (!this.favouritedIcons.length || !this.icons.length) return;
+
+      const byId = new Map(this.icons.map((icon) => [icon.icons_id, icon]));
+      const byTitleHex = new Map(
+        this.icons.map((icon) => [`${icon.title}|${icon.hex}`, icon])
+      );
+
+      this.favouritedIcons = this.favouritedIcons
+        .map(
+          (fav) =>
+            byId.get(fav.icons_id) || byTitleHex.get(`${fav.title}|${fav.hex}`)
+        )
+        .filter(Boolean);
+    },
   },
   mounted() {
-    // initiated the document
     onmessage = (event) => {
-      let data = event.data.pluginMessage;
+      const data = event.data.pluginMessage;
       if (data) {
         this.favouritedIcons = data;
+        if (this.loaded) this.hydrateFavourites();
       } else {
         this.updateFavourites();
       }
-    }
+    };
 
     this.getSimple();
-
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'Shift') {
-        this.specialTrigger = true;
-      }
-    });
-    window.addEventListener('keyup', (event) => {
-      this.specialTrigger = false;
-    });
+  },
+  beforeDestroy() {
+    clearTimeout(this.searchDebounceTimer);
   },
   components: {
     'selection-banner': {
@@ -545,47 +410,37 @@ export default {
       data() {
         return {
           svgData: '',
-          faved: false
+          faved: false,
         };
       },
       mounted() {
-        this.faved = this.$parent.favouritedIcons.some((e) => e.icons_index === this.identity.icons_index);
+        this.faved = this.$parent.favouriteIdSet.has(this.identity.icons_id);
         this.getRawSVG(this.iconTarget);
-      },
-      computed: {
-        rawSVG() {
-          this.$http.get(this.iconTarget).then((s) => {
-            return s.data;
-          });
-        },
       },
       methods: {
         placeColor(str) {
-          let color = str;
-          
-          parent.postMessage(
-            { pluginMessage: { type: "create-color", color } },
-            "*"
-          );
+          parent.postMessage({ pluginMessage: { type: 'create-color', color: str } }, '*');
         },
         placeIcon() {
-          let rawsvg = this.svgData;
-          let title = this.llave;
           parent.postMessage(
-            { pluginMessage: { type: "create-icon", rawsvg, title } },
-            "*"
+            { pluginMessage: { type: 'create-icon', rawsvg: this.svgData, title: this.llave } },
+            '*'
           );
         },
-        getRawSVG: async function(url) {
-          this.$http.get(url).then((s) => {
-            this.svgData = s.data;
-          });
+        async getRawSVG(url) {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            this.svgData = await res.text();
+          } catch (error) {
+            console.error(error);
+          }
         },
         favouriteToggle() {
           if (this.faved) {
             this.faved = false;
             this.$parent.favouritedIcons.splice(
-              this.$parent.favouritedIcons.findIndex(e => e.icons_id === this.identity.icons_id),
+              this.$parent.favouritedIcons.findIndex((e) => e.icons_id === this.identity.icons_id),
               1
             );
             this.$parent.updateFavourites();
@@ -594,7 +449,7 @@ export default {
             this.$parent.favouritedIcons.push(this.identity);
             this.$parent.updateFavourites();
           }
-        }
+        },
       },
       components: {
         'copy-icon': {
@@ -612,19 +467,19 @@ export default {
               <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             `,
         },
-        'star-icon' : {
+        'star-icon': {
           props: ['filled'],
           template: `
               <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" :fill="filled ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          `
-        }
+          `,
+        },
       },
     },
     'star-icon': {
       props: ['filled'],
       template: `
               <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" :fill="filled ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          `
+          `,
     },
     'close-icon': {
       template: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 21L21 9M21 21L9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -638,9 +493,10 @@ export default {
     'question-icon': {
       template: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 2C7.8203 2 2 7.8203 2 15C2 22.1797 7.8203 28 15 28C22.1797 28 28 22.1797 28 15C28 7.8203 22.1797 2 15 2ZM10.4975 12C9.90643 12 9.40657 11.5233 9.49197 10.9385C9.54874 10.5497 9.64575 10.1858 9.78403 9.76881C10.0537 9.00638 10.433 8.34792 10.9218 7.79343C11.4106 7.22161 12.009 6.77975 12.7169 6.46785C13.4249 6.15595 14.2171 6 15.0936 6C15.8858 6 16.6022 6.12129 17.2427 6.36388C17.9001 6.58915 18.4648 6.92704 18.9367 7.37756C19.4087 7.81076 19.7711 8.34792 20.0239 8.98905C20.2936 9.63019 20.4285 10.3666 20.4285 11.1984C20.4285 11.7355 20.3611 12.2207 20.2262 12.6539C20.1082 13.0698 19.9481 13.451 19.7458 13.7975C19.5436 14.1441 19.3076 14.4647 19.0379 14.7592C18.785 15.0538 18.5238 15.3397 18.2541 15.617C17.9844 15.8769 17.7147 16.1455 17.445 16.4227C17.1922 16.6826 16.9562 16.9685 16.7371 17.2804C16.669 17.3796 16.5908 17.4733 16.512 17.5678C16.3567 17.754 16.1986 17.9435 16.1091 18.1849C15.9948 18.4935 15.9952 18.5409 15.998 18.8228C15.9985 18.8734 15.9991 18.9315 15.9991 19V19.0173C15.9991 19.5676 15.553 20.0137 15.0028 20.0137C14.4525 20.0137 14.0064 19.5676 14.0064 19.0173V18.7921C14.0401 18.0643 14.0654 17.9129 14.2845 17.4104C14.5205 16.8906 14.7986 16.4314 15.1189 16.0328C15.456 15.6343 15.8016 15.2704 16.1555 14.9412C16.5264 14.5946 16.8635 14.2394 17.1669 13.8755C17.4871 13.4943 17.74 13.0784 17.9254 12.6279C18.1108 12.1774 18.1867 11.6316 18.1529 10.9904C18.0855 10.0374 17.7821 9.29229 17.2427 8.75513C16.7202 8.21797 16.0038 7.94938 15.0936 7.94938C14.4868 7.94938 13.9643 8.06202 13.526 8.28728C13.0878 8.51254 12.7169 8.81578 12.4135 9.19699C12.127 9.5782 11.9163 10.0287 11.7814 10.5486C11.7464 10.6838 11.7161 10.8058 11.6904 10.923C11.5624 11.5083 11.0966 12 10.4975 12ZM14.9995 24.0154C15.5518 24.0154 15.9995 23.5676 15.9995 23.0154C15.9995 22.4631 15.5518 22.0154 14.9995 22.0154C14.4472 22.0154 13.9995 22.4631 13.9995 23.0154C13.9995 23.5676 14.4472 24.0154 14.9995 24.0154Z" fill="currentColor"/></svg>`,
     },
-    whatsNew
+    'loading-spinner': LoadingSpinner,
+    whatsNew,
   },
-}
+};
 </script>
 
 <style lang="scss">
@@ -833,6 +689,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
 
     .si-credits {
@@ -1055,9 +912,10 @@ export default {
     scroll-behavior: smooth;
     scrollbar-gutter: stable;
     &:not(.favourites-grid) {
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      max-height: 100%;
       transition: $near $curve max-height;
       @include custom-scrollbar();
     }
@@ -1145,6 +1003,8 @@ export default {
         overflow: hidden;
         outline-offset: calc($gap/2 - ($border-width/2))+0px;
         user-select: none;
+        content-visibility: auto;
+        contain-intrinsic-size: auto 96px;
       }
       > * {
         margin-top: 0;
@@ -1203,6 +1063,7 @@ export default {
           grid-template-rows: 1fr 1fr;
           text-align: left;
           padding: 0;
+          contain-intrinsic-size: auto 72px;
         }
         h3, p, span {
           padding: 1rem;

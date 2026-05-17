@@ -45,8 +45,7 @@
     currentVer: this.$parent.version,
     changelog: [
      'Fixed icon loading issues for some users',
-     'Updated codebase for better performance',
-     'Favourites broke often, so new method implemented to fix that.',
+     'Fixed broken icons.',
     ],
     toastMessage: '',
     importError: false
