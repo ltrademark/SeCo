@@ -79,7 +79,7 @@
       <div class="icon-grid" :class="{'list-view': viewAsList}">
         <div
           class="icon-grid--item"
-          v-for="icon in filteredIcons"
+          v-for="icon in visibleIcons"
           :key="`${icon.icons_id}`"
           :class="{selected: icon.icons_id === selectedIcon}"
           :title="icon.title"
@@ -98,6 +98,11 @@
             v-if="favouriteIdSet.has(icon.icons_id)"
           ></i>
         </div>
+        <button v-if="filteredIcons.length > displayLimit" 
+                @click="displayLimit += 50" 
+                class="icon-grid--item load-more btn btn--secondary">
+                Load More ({{ commify(filteredIcons.length - displayLimit) }} remaining)
+        </button>
       </div>
     </div>
     <transition name="popup" mode="out-in">
@@ -142,6 +147,7 @@ export default {
       viewOpen: false,
       showFavourites: false,
       whatsNewModalOpen: false,
+      displayLimit: 48,
     };
   },
   filters: {
@@ -172,30 +178,29 @@ export default {
   computed: {
     selectedIconData() {
       if (this.selectedIcon === null) return {};
-      return this.handleIcons(this.selectedIcon) || {};
+      const icon = this.handleIcons(this.selectedIcon) || {};
+
+      return {
+        ...icon,
+        rgb: this.getRGB(icon.hex) 
+      };
     },
     filteredIcons() {
-      const searchTerm = this.debouncedSearch;
+      const searchTerm = this.debouncedSearch.toLowerCase().trim();
+      if (!searchTerm) return this.icons;
 
+      const parts = searchTerm.split(/\s+/);
+      
       return this.icons.filter((icon) => {
-        const parts = searchTerm.trim().split(/\s+/).filter(Boolean);
-        if (parts.length === 0) return true;
-
-        for (const part of parts) {
-          const needle = part.toLowerCase();
-          if (
-            !icon.title.toLowerCase().includes(needle) &&
-            !icon.hex.toLowerCase().includes(needle)
-          ) {
-            return false;
-          }
-        }
-        return true;
+        return parts.every(part => icon.searchStr.includes(part));
       });
     },
     favouriteIdSet() {
       return new Set(this.favouritedIcons.map((icon) => icon.icons_id));
     },
+    visibleIcons() {
+      return this.filteredIcons.slice(0, this.displayLimit);
+    }
   },
   methods: {
     async getSimple() {
@@ -203,17 +208,21 @@ export default {
         const res = await fetch(SIMPLE_ICONS_SOURCE + '/data/simple-icons.json');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        this.icons = Array.isArray(data) ? data : data.icons;
+        // this.icons = Array.isArray(data) ? data : data.icons;
+        const rawIcons = Array.isArray(data) ? data : data.icons;
 
-        for (let i = 0; i < this.icons.length; i++) {
-          const icon = this.icons[i];
-          icon.icons_id = this.generateIconId(icon);
+        for (let i = 0; i < rawIcons.length; i++) {
+          const icon = rawIcons[i];
+          icon.icons_id = 'icon' + this.generateIconId(icon) + '_' + i;
           icon.icons_index = i;
-          icon.hsl = this.getHSL(icon.hex);
-          icon.rgb = this.getRGB(icon.hex);
           icon.svgUrl = SIMPLE_ICONS_SOURCE + '/icons/' + icon.slug + '.svg';
+          icon.searchStr = `${icon.title.toLowerCase()} ${icon.hex.toLowerCase()}`;
+          // icon.hsl = this.getHSL(icon.hex);
+          // icon.rgb = this.getRGB(icon.hex);
         }
         this.hydrateFavourites();
+        this.icons = Object.freeze(rawIcons);
+        // this.icons = rawIcons;
         this.loaded = true;
       } catch (error) {
         console.error(error);
@@ -223,22 +232,20 @@ export default {
       clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = setTimeout(() => {
         this.debouncedSearch = this.isearch;
+        this.displayLimit = 50;
       }, 250);
     },
     iconFilename(url) {
       return url ? url.slice(url.lastIndexOf('/') + 1) : '';
     },
     sortByColour() {
-      this.icons.sort((a, b) => {
-        const aHSL = a.hsl.split(',');
-        const bHSL = b.hsl.split(',');
-
-        return (
-          parseInt(aHSL[0] - bHSL[0]) -
-          (aHSL[1] - bHSL[1]) -
-          (aHSL[2] - bHSL[2])
-        );
+      const sortedIcons = [...this.icons].sort((a, b) => {
+        const aHSL = this.getHSL(a.hex).split(',');
+        const bHSL = this.getHSL(b.hex).split(',');
+        return parseInt(aHSL[0] - bHSL[0]) - (aHSL[1] - bHSL[1]) - (aHSL[2] - bHSL[2]);
       });
+      
+      this.icons = Object.freeze(sortedIcons);
       this.filterByColour = true;
       this.selectedIcon = null;
       this.sortOpen = false;

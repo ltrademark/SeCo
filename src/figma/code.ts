@@ -28,8 +28,9 @@ async function startUI() {
           const b = color.b / 255;
       
           for (const node of figma.currentPage.selection) {
-            // @ts-ignore
-            node.fills = [{type: 'SOLID', color: {r: r, g: g, b: b}}];
+            if ('fills' in node) {
+              node.fills = [{type: 'SOLID', color: {r, g, b}}];
+            }
           }
         } else {
           figma.notify('Please select something');
@@ -64,15 +65,8 @@ async function startUI() {
         break;
       case 'update-faves':
         if(msg.favourites) {
-          const setS = await figma.clientStorage.setAsync("faves", msg.favourites);
-          const getS = await figma.clientStorage.getAsync("faves");
-          
-          if (getS) {
-            setS
-            figma.ui.postMessage(getS);
-          }
-        } else {
-          return;
+          await figma.clientStorage.setAsync("faves", msg.favourites);
+          figma.ui.postMessage({ type: 'init-faves', data: msg.favourites });
         }
         break;
       case 'cancel':
