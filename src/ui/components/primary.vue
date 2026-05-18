@@ -65,6 +65,8 @@
             :style="'background-color: #' + icon.hex"
             :key="icon.icons_id + '-fav'"
             :data-iconindex="icon.icons_id + '-fav'"
+            draggable="true"
+            @dragend="onDragEnd($event, icon)"
             @click="selectIcon(icon.title, icon.icons_id)">
             <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
               <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" />
@@ -85,6 +87,8 @@
           :title="icon.title"
           :style="'background-color: #' + icon.hex"
           :data-iconindex="icon.icons_id"
+          draggable="true"
+          @dragend="onDragEnd($event, icon)"
           @click="selectIcon(icon.title, icon.icons_id)"
         >
           <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
@@ -383,14 +387,47 @@ export default {
         )
         .filter(Boolean);
     },
+    onDragEnd(e, icon) {
+      window.parent.postMessage({
+        pluginDrop: {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          items: [], // <--- This empty array fixes the validation error!
+          dropMetadata: {
+            title: icon.title,
+            svgUrl: icon.svgUrl
+          }
+        }
+      }, '*');
+    },
   },
   mounted() {
-    onmessage = (event) => {
+    onmessage = async (event) => {
       const data = event.data.pluginMessage;
-      if (data) {
+
+      if (data && data.type === 'fetch-and-place') {
+        try {
+          const res = await fetch(data.svgUrl);
+          const rawsvg = await res.text();
+          parent.postMessage({ 
+            pluginMessage: { 
+              type: 'create-icon-drop', 
+              rawsvg: rawsvg, 
+              title: data.title, 
+              x: data.x, 
+              y: data.y 
+            } 
+          }, '*');
+        } catch (err) {
+          console.error(err);
+        }
+        return; 
+      }
+
+      if (data && Array.isArray(data)) {
         this.favouritedIcons = data;
         if (this.loaded) this.hydrateFavourites();
-      } else {
+      } else if (data && data.type !== 'create-icon-drop') {
         this.updateFavourites();
       }
     };

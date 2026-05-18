@@ -45,7 +45,9 @@
     currentVer: this.$parent.version,
     changelog: [
      'Fixed icon loading issues for some users',
-     'Fixed broken icons.',
+     'Fixed broken icons',
+     'Ability to search by hex code',
+     'Added drag and drop support for icons',
     ],
     toastMessage: '',
     importError: false
