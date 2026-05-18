@@ -255,7 +255,9 @@ export default {
       this.sortOpen = false;
     },
     sortByName() {
-      this.icons.sort((a, b) => a.icons_index - b.icons_index);
+      const sortedIcons = [...this.icons].sort((a, b) => a.icons_index - b.icons_index);
+      
+      this.icons = Object.freeze(sortedIcons);
       this.filterByColour = false;
       this.selectedIcon = null;
       this.sortOpen = false;
