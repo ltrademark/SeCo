@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "target": "ES2017",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es6",
     "allowJs": true,
     "jsx": "preserve",
+    "lib": ["ESNext", "DOM"],
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@figma"

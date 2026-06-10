@@ -1,12 +1,10 @@
-import camelCase from "lodash/camelCase";
-const requireModule = require.context(".", false, /\.js$/); //extract js files inside modules folder
-const modules = {};
+const moduleFiles = import.meta.glob('./*.js', { eager: true })
+const modules = {}
 
-requireModule.keys().forEach(fileName => {
-	if (fileName === "./index.js") return; //reject the index.js file
+for (const path in moduleFiles) {
+	if (path === './index.js') continue
+	const name = path.replace(/^\.\//, '').replace(/\.js$/, '')
+	modules[name] = moduleFiles[path].default
+}
 
-	const moduleName = camelCase(fileName.replace(/(\.\/|\.js)/g, "")); //
-
-	modules[moduleName] = requireModule(fileName).default;
-});
-export default modules;
+export default modules
