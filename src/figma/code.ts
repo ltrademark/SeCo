@@ -52,6 +52,7 @@ async function startUI() {
         nodes.push(svg);
 
         figma.currentPage.appendChild(svg);
+        svg.lockAspectRatio();
         svg.x = figma.viewport.center.x;
         svg.y = figma.viewport.center.y;
         if (figma.currentPage.selection.length > 0) {
@@ -82,6 +83,7 @@ async function startUI() {
         dropNodes.push(dropSvg);
 
         figma.currentPage.appendChild(dropSvg);
+        dropSvg.lockAspectRatio();
 
         // Place the icon exactly at the drop coordinates!
         if (msg.x !== undefined && msg.y !== undefined) {

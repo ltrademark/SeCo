@@ -1,7 +1,6 @@
 <template>
   <div id="simple">
     <div class="icon-search">
-      <!-- <i class="icon icon--search"></i> -->
       <search-icon class="icon"></search-icon>
       <div class="icon-search--container input">
         <label for="#isearch" style="display: none;"></label>
@@ -18,7 +17,6 @@
               type="button"
               @click="showFavourites = !showFavourites"
               :title="showFavourites ? 'Hide Favourites' : 'Show Favourites'">
-              <!-- <i class="icon" :class="showFavourites ? 'icon--star-on icon--blue' : 'icon--star-off'"></i> -->
               <star-icon :filled="showFavourites" />
       </button>
     </div>
@@ -66,6 +64,7 @@
             :key="icon.icons_id + '-fav'"
             :data-iconindex="icon.icons_id + '-fav'"
             draggable="true"
+            @dragstart="onDragStart"
             @dragend="onDragEnd($event, icon)"
             @click="selectIcon(icon.title, icon.icons_id)">
             <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
@@ -88,6 +87,7 @@
           :style="'background-color: #' + icon.hex"
           :data-iconindex="icon.icons_id"
           draggable="true"
+          @dragstart="onDragStart"
           @dragend="onDragEnd($event, icon)"
           @click="selectIcon(icon.title, icon.icons_id)"
         >
@@ -152,6 +152,8 @@ export default {
       showFavourites: false,
       whatsNewModalOpen: false,
       displayLimit: 48,
+      isDragging: false,
+      dragLeftWindow: false,
     };
   },
   filters: {
@@ -263,6 +265,10 @@ export default {
       this.sortOpen = false;
     },
     selectIcon(name, idx) {
+      if (this.isDragging) {
+        this.isDragging = false;
+        return;
+      }
       const iconIsSame = this.selectedIcon === idx;
       const noIcon = this.selectedIcon === null;
 
@@ -389,12 +395,26 @@ export default {
         )
         .filter(Boolean);
     },
+    onDocDragLeave(e) {
+      if (this.isDragging && e.relatedTarget === null) {
+        this.dragLeftWindow = true;
+      }
+    },
+    onDragStart() {
+      this.isDragging = true;
+      this.dragLeftWindow = false;
+      this.selectedIcon = null;
+    },
     onDragEnd(e, icon) {
+      const droppedOutside = this.dragLeftWindow;
+      this.isDragging = false;
+      this.dragLeftWindow = false;
+      if (!droppedOutside) return;
       window.parent.postMessage({
         pluginDrop: {
           clientX: e.clientX,
           clientY: e.clientY,
-          items: [], // <--- This empty array fixes the validation error!
+          items: [],
           dropMetadata: {
             title: icon.title,
             svgUrl: icon.svgUrl
@@ -404,6 +424,7 @@ export default {
     },
   },
   mounted() {
+    document.addEventListener('dragleave', this.onDocDragLeave);
     onmessage = async (event) => {
       const data = event.data.pluginMessage;
 
@@ -437,6 +458,7 @@ export default {
     this.getSimple();
   },
   beforeDestroy() {
+    document.removeEventListener('dragleave', this.onDocDragLeave);
     clearTimeout(this.searchDebounceTimer);
   },
   components: {
@@ -1037,6 +1059,7 @@ export default {
 
     &--item {
       cursor: pointer;
+      user-select: none;
       &:not(.btn) {
         position: relative;
         display: flex;
@@ -1054,6 +1077,7 @@ export default {
       }
       > * {
         margin-top: 0;
+        pointer-events: none;
       }
       &.load-more {
         position: sticky;
