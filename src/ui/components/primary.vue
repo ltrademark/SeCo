@@ -137,7 +137,7 @@ const SIMPLE_ICONS_SOURCE = 'https://cdn.jsdelivr.net/npm/simple-icons';
 export default {
   data() {
     return {
-      version: '4.3',
+      version: '4.4',
       loaded: false,
       icons: [],
       favouritedIcons: [],
