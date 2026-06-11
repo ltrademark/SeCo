@@ -68,7 +68,7 @@
             @dragend="onDragEnd($event, icon)"
             @click="selectIcon(icon.title, icon.icons_id)">
             <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
-              <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" />
+              <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" draggable="false" />
             </span>
             <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
             <p :style="icon.hex | contrast">#{{ icon.hex }}</p>
@@ -92,7 +92,7 @@
           @click="selectIcon(icon.title, icon.icons_id)"
         >
           <span :style="$options.filters.contrast(icon.hex) === 'color: #ffffff' ? 'filter: invert(1)' : ''">
-            <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" />
+            <img :src="icon.svgUrl" :alt="icon.title" loading="lazy" draggable="false" />
           </span>
           <h3 :style="icon.hex | contrast">{{ icon.title }}</h3>
           <p :style="icon.hex | contrast">#{{ icon.hex }}</p>

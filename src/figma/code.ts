@@ -103,8 +103,8 @@ async function startUI() {
 
         // Place the icon exactly at the drop coordinates!
         if (msg.x !== undefined && msg.y !== undefined) {
-          dropSvg.x = msg.x;
-          dropSvg.y = msg.y;
+          dropSvg.x = msg.x - dropSvg.width / 2;
+          dropSvg.y = msg.y - dropSvg.height / 2;
         }
 
         dropNode.remove();
