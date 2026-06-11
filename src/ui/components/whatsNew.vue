@@ -44,10 +44,10 @@
    return {
     currentVer: this.$parent.version,
     changelog: [
-     'Fixed icon loading issues for some users',
-     'Fixed broken icons',
-     'Ability to search by hex code',
-     'Added drag and drop support for icons',
+     'Drag and drop icons onto the board — icon lands centered on your cursor',
+     'Hold Shift while dragging to apply the icon\'s brand color as a fill to any shape or frame',
+     'Improved drag reliability — dragging from the icon image no longer misfires',
+     'Migrated build tooling from Webpack to Vite for faster development builds',
     ],
     toastMessage: '',
     importError: false
