@@ -154,6 +154,7 @@ export default {
       displayLimit: 48,
       isDragging: false,
       dragLeftWindow: false,
+      isShiftHeld: false,
     };
   },
   filters: {
@@ -395,6 +396,12 @@ export default {
         )
         .filter(Boolean);
     },
+    onKeyDown(e) {
+      if (e.key === 'Shift') this.isShiftHeld = true;
+    },
+    onKeyUp(e) {
+      if (e.key === 'Shift') this.isShiftHeld = false;
+    },
     onDocDragLeave(e) {
       if (this.isDragging && e.relatedTarget === null) {
         this.dragLeftWindow = true;
@@ -417,7 +424,9 @@ export default {
           items: [],
           dropMetadata: {
             title: icon.title,
-            svgUrl: icon.svgUrl
+            svgUrl: icon.svgUrl,
+            hex: icon.hex,
+            isColorDrop: this.isShiftHeld
           }
         }
       }, '*');
@@ -425,6 +434,8 @@ export default {
   },
   mounted() {
     document.addEventListener('dragleave', this.onDocDragLeave);
+    document.addEventListener('keydown', this.onKeyDown);
+    document.addEventListener('keyup', this.onKeyUp);
     onmessage = async (event) => {
       const data = event.data.pluginMessage;
 
@@ -459,6 +470,8 @@ export default {
   },
   beforeDestroy() {
     document.removeEventListener('dragleave', this.onDocDragLeave);
+    document.removeEventListener('keydown', this.onKeyDown);
+    document.removeEventListener('keyup', this.onKeyUp);
     clearTimeout(this.searchDebounceTimer);
   },
   components: {

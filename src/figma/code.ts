@@ -8,6 +8,22 @@ interface msg {
   favourites?: any[];
 }
 
+function findNodeAtPoint(parent: ChildrenMixin, x: number, y: number): SceneNode | null {
+  for (let i = parent.children.length - 1; i >= 0; i--) {
+    const child = parent.children[i] as SceneNode;
+    const bounds = child.absoluteBoundingBox;
+    if (!bounds) continue;
+    if (x >= bounds.x && x <= bounds.x + bounds.width && y >= bounds.y && y <= bounds.y + bounds.height) {
+      if ('children' in child) {
+        const deeper = findNodeAtPoint(child as unknown as ChildrenMixin, x, y);
+        if (deeper) return deeper;
+      }
+      return child;
+    }
+  }
+  return null;
+}
+
 startUI();
 
 // @ts-ignore
@@ -103,6 +119,20 @@ async function startUI() {
     const { dropMetadata } = event;
 
     if (dropMetadata && dropMetadata.svgUrl) {
+      if (dropMetadata.isColorDrop) {
+        const target = findNodeAtPoint(figma.currentPage, event.absoluteX, event.absoluteY);
+        if (target && 'fills' in target && target.type !== 'TEXT') {
+          const hex: string = dropMetadata.hex;
+          const r = parseInt(hex.substring(0, 2), 16) / 255;
+          const g = parseInt(hex.substring(2, 4), 16) / 255;
+          const b = parseInt(hex.substring(4, 6), 16) / 255;
+          target.fills = [{ type: 'SOLID', color: { r, g, b } }];
+        } else {
+          figma.notify('Color fill must be applied to shapes or frames', { error: true });
+        }
+        return false;
+      }
+
       figma.ui.postMessage({
         type: 'fetch-and-place',
         svgUrl: dropMetadata.svgUrl,
